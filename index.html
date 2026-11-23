@@ -190,6 +190,8 @@ details.adv summary{list-style:none;cursor:pointer;color:var(--acc2);font-size:1
 .moods{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px;margin-bottom:14px}
 .moods button{height:64px;border-radius:18px;background:rgba(255,255,255,.08);display:grid;place-items:center;align-content:center;gap:2px;font-size:11px;color:var(--mute);transition:transform .5s var(--spring),background .25s}
 .moods button b{font:700 19px Unbounded,sans-serif;color:var(--ink)}.moods button[aria-pressed=true]{background:var(--acc);color:#1d0b04}.moods button[aria-pressed=true] b{color:#1d0b04}
+.daycard .moods{margin:4px 18px 10px}.daycard .dn{padding:0 18px 16px}.daycard .dn input{width:100%;height:46px;border:0;border-radius:14px;background:rgba(255,255,255,.07);padding:0 14px;font-size:16px;outline:none}.daycard .dn input:focus{background:rgba(255,255,255,.11)}
+.diary .row{cursor:default;min-height:0}.diary .mood{width:34px;height:34px;border-radius:11px;background:var(--acc);color:#1d0b04;display:grid;place-items:center;font:700 14px Unbounded,sans-serif;flex:none}.diary .mood.o{background:rgba(255,255,255,.1);color:var(--mute)}
 .mrow{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:.5px solid rgba(255,255,255,.08)}.mrow:last-child{border:0}
 .mrow .nm{flex:1;text-align:left;padding:8px 0;font-weight:500}
 .ud{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.08);color:var(--mute)}
@@ -270,6 +272,7 @@ const I={
  pause:'<svg class="ic" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>',
  x:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
  chev:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>',
+ bell:'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15zM10 21h4"/></svg>',
  gear:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>'};
 document.querySelector('.gear').insertAdjacentHTML('afterbegin',I.gear);
 const SPHERES={body:'Тіло і здоров’я',work:'Робота і проєкти',grow:'Саморозвиток',quit:'Відмова від шкідливого'};
@@ -342,7 +345,7 @@ const fmtT=ms=>{const s=Math.floor(ms/1000);return Math.floor(s/60)+':'+String(s
 
 /* ---------- today ---------- */
 function habitRow(h,i){const d=isDone(h,day),fz=isFz(h,day),st=streak(h),v=val(h,day)||0,run=S.timer&&S.timer.hid===h.id;
-  const sub=[st?`<span class="fl">${I.flame}${st}</span>`:'',h.type==='timer'?(run?`<span class="fl" data-run>${fmtT(Date.now()-S.timer.start)}</span>`:`<span>${v} / ${h.target} хв</span>`):'',h.type==='quit'&&!st?'<span>чистих днів: 0</span>':'',fz?`<span class="iceT">${I.snow} заморожено</span>`:''].filter(Boolean).join('');
+  const sub=[st?`<span class="fl">${I.flame}${st}</span>`:'',h.type==='timer'?(run?`<span class="fl" data-run>${fmtT(Date.now()-S.timer.start)}</span>`:`<span>${v} / ${h.target} хв</span>`):'',h.type==='quit'&&!st?'<span>чистих днів: 0</span>':'',h.remind&&!d?`<span>${I.bell} ${h.remind}</span>`:'',fz?`<span class="iceT">${I.snow} заморожено</span>`:''].filter(Boolean).join('');
   let right;if(h.type==='timer'){const C=2*Math.PI*19,p=Math.min(1,v/h.target);
     right=`<button class="tring${run?' run':''}" data-a="timer" data-id="${h.id}" aria-label="${run?'Зупинити':'Запустити'} таймер ${esc(h.name)}">${run?'':`<svg class="r" viewBox="0 0 44 44"><circle cx="22" cy="22" r="19" stroke="rgba(255,255,255,.16)"/><circle cx="22" cy="22" r="19" stroke="${d?'#ff6a3d':'#ff9a75'}" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C*(1-p)}"/></svg>`}${run?I.pause:d?I.check.replace('#1d0b04','#ff9a75'):I.play}</button>`}
   else right=`<button class="tick" data-a="tog" data-id="${h.id}" aria-pressed="${d}" aria-label="${esc(h.name)}">${I.check}</button>`;
@@ -350,13 +353,12 @@ function habitRow(h,i){const d=isDone(h,day),fz=isFz(h,day),st=streak(h),v=val(h
 function taskRow(t,k,i){return `<div class="row stag${t.done?' done':''}" style="--i:${i}" data-a="tsheet" data-k="${k}" data-id="${t.id}"><span class="time">${t.time||'—'}</span><div class="ri"><b>${esc(t.title)}</b></div><button class="tick sm" data-a="ptog" data-k="${k}" data-id="${t.id}" aria-pressed="${!!t.done}" aria-label="${esc(t.title)}">${I.check}</button></div>`}
 function ctxCard(){if(day!==today()||!S.habits.length)return '';const now=new Date(),hr=now.getHours(),dow=now.getDay();
   if((dow===0&&hr>=17)||(dow===1&&hr<12&&!S.reviews[add(wk(day),-7)]))return `<div class="ctx glass stag" style="--i:1"><div><b>Підсумок тижня</b><span>Хвилина на огляд, і наступний буде кращим</span></div><button class="pill press" data-a="review">Відкрити</button></div>`;
-  if(hr>=18&&!S.days[day]?.mood)return `<div class="ctx glass stag" style="--i:1"><div><b>Закрий день</b><span>Оціни настрій і запиши пару слів</span></div><button class="pill press" data-a="daysheet">Оцінити</button></div>`;
   return ''}
 function renderToday(){const t=today(),list=S.habits.filter(h=>sched(h,day)),dn=list.filter(h=>isDone(h,day)).length,C=2*Math.PI*52,p=list.length?dn/list.length:0;
   const bestSt=Math.max(0,...S.habits.map(streak)),mood=S.days[day]?.mood;
   const status=!S.habits.length?'Додай першу звичку':!list.length?'Сьогодні звичок немає':dn===list.length?'День закрито. Так тримати':'Лишилось '+(list.length-dn);
   let h=`<div class="hero glass stag"><div class="ring"><svg viewBox="0 0 118 118"><circle class="tr" cx="59" cy="59" r="52"/><circle class="gl" cx="59" cy="59" r="52" stroke-dasharray="${C}" stroke-dashoffset="${C*(1-p)}"/><circle class="pr" cx="59" cy="59" r="52" stroke-dasharray="${C}" stroke-dashoffset="${C*(1-p)}"/></svg><div class="c"><div><b>${dn}/${list.length}</b><small>звичок</small></div></div></div>
-   <div style="flex:1"><h1>${dayName(day)}</h1><div class="d">${dLabel(day)}</div><div class="s"><span>${status}</span>${bestSt?`<span class="fl">${I.flame}${bestSt}</span>`:''}${mood?`<button class="chip" style="height:28px;padding:0 10px;font-size:12px" data-a="daysheet">Настрій ${mood} · ${MOODS[mood-1]}</button>`:''}</div>
+   <div style="flex:1"><h1>${dayName(day)}</h1><div class="d">${dLabel(day)}</div><div class="s"><span>${status}</span>${bestSt?`<span class="fl">${I.flame}${bestSt}</span>`:''}</div>
    <div class="daybtns"><button class="rb glass press" data-a="dnav" data-n="-1" aria-label="Попередній день">‹</button><button class="rb glass press" data-a="dnav" data-n="1" aria-label="Наступний день" ${day>=t?'disabled':''}>›</button>${day!==t?`<button class="pill g press" data-a="dtoday" style="height:38px">Сьогодні</button>`:''}</div></div></div>`;
   h+=ctxCard();
   if(!S.habits.length)h+=`<div class="glass empty stag" style="--i:2"><h2>Почнімо з першої звички</h2><p>Додай 2–3 звички. Коли стануть автоматичними, додаси ще.</p><button class="pill press" data-a="add" data-m="habit">Додати звичку</button></div>`;
@@ -365,6 +367,9 @@ function renderToday(){const t=today(),list=S.habits.filter(h=>sched(h,day)),dn=
   const L=planOf(day),pd=L.filter(x=>x.done).length,show=[...L.filter(x=>!x.done),...L.filter(x=>x.done)].slice(0,4);
   h+=`<div class="glass card stag" style="--i:6"><div class="ch">План на день<small>${L.length?pd+' з '+L.length:''}</small></div>${show.map((x,i)=>taskRow(x,day,7+i)).join('')}
     ${L.length>4?`<button class="more" data-a="tab" data-v="plan"><span>Ще ${L.length-4}</span>${I.chev}</button>`:''}${inl('plan','Додати задачу')}</div>`;
+  {const m=S.days[day]||{};h+=`<div class="glass card daycard stag" style="--i:7"><div class="ch">Як пройшов день?<small>${m.mood?MOODS[m.mood-1]:'від 1 до 5'}</small></div>
+    <div class="moods">${MOODS.map((x,i)=>`<button data-a="mood" data-n="${i+1}" aria-pressed="${m.mood===i+1}" aria-label="${x}"><b>${i+1}</b>${x}</button>`).join('')}</div>
+    <div class="dn"><input id="dnote" value="${esc(m.note||'')}" maxlength="160" placeholder="Що зробив за день, кілька слів" aria-label="Що зробив за день" enterkeyhint="done"></div></div>`}
   const wg=S.goals.filter(g=>g.scope==='week'&&g.period===wk(t));
   if(wg.length)h+=`<button class="glass more stag" style="--i:8;border-radius:22px;padding:15px 18px" data-a="tab" data-v="goals"><span>Цілі тижня · ${wg.filter(g=>g.done).length} з ${wg.length}</span>${I.chev}</button>`;
   $('v-today').innerHTML=h}
@@ -423,6 +428,7 @@ function renderStats(){const t=today(),{checks,mins,goals,xp}=totals(),lv=level(
    <div style="padding:6px 14px 14px"><textarea class="fi" id="rnote" placeholder="Що змінити наступного тижня?" maxlength="2000">${esc(S.reviews[rw]||'')}</textarea></div></div>
   <div class="kpis">${[[sch?Math.round(dn/sch*100)+'%':'—','звички за 7 днів'],[curAll,'найдовший стрік зараз'],[bestAll,'рекорд стріку'],[(mins/60).toFixed(1)+' год','у таймерах'],[ms.length?avg(ms):'—','настрій за 7 днів'],[goals,'цілей закрито']].map(([a,b],i)=>`<div class="kpi glass stag" style="--i:${3+i}"><div class="num">${a}</div><p>${b}</p></div>`).join('')}</div>
   <p class="hint stag" style="--i:9;margin:0 4px 14px;font-size:14px">${hi.length>=3&&lo.length>=3?`Настрій у дні, коли виконано 80%+ звичок: <b style="color:var(--ink)">${avg(hi)}</b> проти ${avg(lo)} в інші дні.`:'Оцінюй день хоча б тиждень, і тут з’явиться зв’язок настрою зі звичками.'}</p>
+  ${(()=>{const L=Array.from({length:7},(_,i)=>add(t,-i)).filter(k=>S.days[k]&&(S.days[k].mood||S.days[k].note));return L.length?`<div class="glass card diary stag" style="--i:10"><div class="ch">Щоденник<small>останні 7 днів</small></div>${L.map(k=>{const m=S.days[k];return `<div class="row"><span class="mood${m.mood?'':' o'}">${m.mood||'—'}</span><div class="ri"><b style="font-size:14px;color:var(--mute);font-weight:500">${dayName(k)}</b><span>${esc(m.note||MOODS[(m.mood||1)-1])}</span></div></div>`}).join('')}</div>`:''})()}
   <div class="glass card stag" style="--i:10"><div class="ch">18 тижнів</div><div class="heat">${cells}</div><div class="legend">менше <i style="background:rgba(255,255,255,.07)"></i><i style="background:#5a2a1c"></i><i style="background:#a8442a"></i><i style="background:var(--acc)"></i> більше · <i style="background:var(--ice)"></i> заморозка</div></div>
   ${S.habits.length?`<div class="glass card stag" style="--i:11"><div class="ch">Звички за 30 днів</div>${S.habits.map(h=>{let s=0,d=0;for(let i=0;i<30;i++){const k=add(t,-i);if(sched(h,k)){s++;if(isDone(h,k))d++}}const p=s?Math.round(d/s*100):0;
     return `<div class="row" data-a="hsheet" data-id="${h.id}" style="display:grid;gap:7px;min-height:0"><div style="display:flex;justify-content:space-between;gap:10px"><b style="font-weight:600">${esc(h.name)}</b><span class="hint">${p}% · рекорд ${best(h)}</span></div><div class="bar"><i style="width:${p}%"></i></div></div>`}).join('')}</div>`:''}
@@ -430,7 +436,7 @@ function renderStats(){const t=today(),{checks,mins,goals,xp}=totals(),lv=level(
 
 /* ---------- header / router ---------- */
 function render(){const{xp}=totals(),lv=level(xp);$('lvl').textContent=lv.L;$('lvlT').textContent=LEVELS[Math.min(7,lv.L-1)];$('xpbar').style.width=(lv.cur/lv.need*100)+'%';
-  const ae=document.activeElement,keep=ae&&ae.closest&&ae.closest('.view')&&(ae.id==='rnote'||ae.closest('.inl'))?{id:ae.id,kind:ae.closest('.inl')?.dataset.kind,v:ae.value,s:ae.selectionStart}:null;
+  const ae=document.activeElement,keep=ae&&ae.closest&&ae.closest('.view')&&(ae.id==='rnote'||ae.id==='dnote'||ae.closest('.inl'))?{id:ae.id,kind:ae.closest('.inl')?.dataset.kind,v:ae.value,s:ae.selectionStart}:null;
   ({today:renderToday,plan:renderPlan,goals:renderGoals,stats:renderStats})[view]();
   if(keep){const el=keep.id?$(keep.id):document.querySelector(`#v-${view} .inl[data-kind="${keep.kind}"] input`);if(el){el.value=keep.v;el.focus();try{el.setSelectionRange(keep.s,keep.s)}catch(e){}}}}
 function moveDrop(squish){const b=document.querySelector(`.tabbar button[data-v="${view}"]`),d=$('drop');if(!b)return;d.style.width=b.offsetWidth+'px';d.style.transform=`translateX(${b.offsetLeft}px)`;if(squish){d.classList.remove('squish');void d.offsetWidth;d.classList.add('squish')}}
@@ -483,6 +489,7 @@ function habitBody(id){const h=H(id);if(!h)return sh('Звичку видале�
    <div class="fld"><span class="lab">Час дня</span>${chipset('hset',Object.entries(PARTS),h.part,`data-k="part" data-id="${id}"`)}</div>
    <div class="fld"><span class="lab">Сфера</span>${chipset('hset',Object.entries(SPHERES),h.sphere,`data-k="sphere" data-id="${id}"`)}</div>
    <div class="fld"><span class="lab">Дні</span>${chipset('hday',DOW.map(x=>[x,DN[x]]),h.days,`data-id="${id}"`,'days')}</div>
+   <div class="fld"><span class="lab">Нагадування (пуш)</span><div class="chips">${[['','Вимк'],['07:00','07:00'],['08:00','08:00'],['09:00','09:00'],['20:00','20:00']].map(([v,l])=>`<button class="chip" data-a="hset" data-k="remind" data-id="${id}" data-v="${v}" aria-pressed="${(h.remind||'')===v}">${l}</button>`).join('')}<input class="chip" type="time" id="hRemind" data-id="${id}" value="${h.remind&&!['07:00','08:00','09:00','20:00'].includes(h.remind)?h.remind:''}" aria-label="Свій час" style="width:110px;border:0"></div>${h.remind&&!window._pushOn?'<p class="hint" style="margin:8px 2px 0">Увімкни сповіщення в налаштуваннях, щоб пуш прийшов на цей пристрій.</p>':''}</div>
    <button class="big danger" data-a="hdel" data-id="${id}" id="hdel">Видалити звичку</button><p class="hint" style="text-align:center;margin-top:8px">Зміни зберігаються одразу</p>`;return b}
 /* task / goal / reward sheets */
 function taskBody(k,id){const t=(S.plan[k]||[]).find(x=>x.id===id);if(!t)return sh('Задачу видалено');
@@ -499,6 +506,10 @@ function rewardBody(id){const r=S.rewards.find(x=>x.id===id);if(!r)return sh('В
 function dayBody(){const m=S.days[day]||{};return sh(dayName(day)+': як пройшов день?')+`<div class="moods">${MOODS.map((t,i)=>`<button data-a="mood" data-n="${i+1}" aria-pressed="${m.mood===i+1}" aria-label="${t}"><b>${i+1}</b>${t}</button>`).join('')}</div>
   <div class="fld"><textarea class="fi" id="dnote" placeholder="Що вдалося, що заважало, що зробиш інакше завтра" maxlength="2000">${esc(m.note||'')}</textarea></div><button class="big" data-a="close">Готово</button>`}
 function settingsBody(){return sh('Налаштування')+`<div class="fld"><span class="lab">Мої звички · тапни, щоб змінити</span>${S.habits.map((h,i)=>`<div class="mrow"><button class="nm" data-a="hsheet" data-id="${h.id}">${esc(h.name)}</button><button class="ud" data-a="hmove" data-id="${h.id}" data-n="-1" ${i?'':'disabled'} aria-label="Вище">↑</button><button class="ud" data-a="hmove" data-id="${h.id}" data-n="1" ${i<S.habits.length-1?'':'disabled'} aria-label="Нижче">↓</button></div>`).join('')||'<p class="hint">Ще немає звичок.</p>'}</div>
+  <div class="fld"><span class="lab">Сповіщення на цьому пристрої</span>${(()=>{const ios=/iPhone|iPad/.test(navigator.userAgent),standalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone;
+     if(!('serviceWorker' in navigator)||!('PushManager' in window)||!('Notification' in window))return ios&&!standalone?'<p class="hint" style="font-size:14px">На iPhone пуші працюють лише з іконки на головному екрані: Safari → Поділитися → На початковий екран, і відкрий Стрік звідти.</p>':'<p class="hint" style="font-size:14px">Цей браузер не підтримує пуш-сповіщення.</p>';
+     if(window._pushOn)return `<div class="chips"><button class="chip" aria-pressed="true">Увімкнено</button><button class="chip" data-a="ptest">Надіслати тест</button></div><p class="hint" style="margin:8px 2px 0">Час нагадування задається в кожній звичці.</p>`;
+     return `<button class="big" data-a="penable">Увімкнути сповіщення</button>${Notification.permission==='denied'?'<p class="hint" style="margin:8px 2px 0">Сповіщення заблоковано. Дозволь їх у Налаштуваннях iPhone → Сповіщення → Стрік.</p>':''}`})()}</div>
   <div class="fld"><span class="lab">Заморозок стріку на місяць</span><div class="stepper"><button data-a="fpm" data-n="-1" aria-label="Менше">−</button><b>${S.fpm}</b><button data-a="fpm" data-n="1" aria-label="Більше">+</button></div></div>
   <div class="fld"><span class="lab">Акаунт</span><div class="mrow"><span class="nm" id="whoami">${esc(window._email||'')}</span></div></div><button class="big danger" data-a="logout">Вийти</button>`}
 
@@ -541,6 +552,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(!b
    tset:()=>{const t=S.plan[ctx.k].find(x=>x.id===ctx.id);t.time=v;save()},
    tmove:()=>{const L=S.plan[ctx.k],t=L.find(x=>x.id===ctx.id);S.plan[ctx.k]=L.filter(x=>x!==t);if(!S.plan[ctx.k].length)delete S.plan[ctx.k];const nk=add(ctx.k,1);(S.plan[nk]=S.plan[nk]||[]).push(t);closeSheet();save();toast('Перенесено на '+dayName(nk).toLowerCase())},
    tdel:()=>confirm2(b,'Точно видалити?',()=>{S.plan[ctx.k]=S.plan[ctx.k].filter(x=>x.id!==ctx.id);if(!S.plan[ctx.k].length)delete S.plan[ctx.k];closeSheet();save()}),
+   penable:()=>window._push&&window._push.enable(b),ptest:()=>window._push&&window._push.test(b),
    logout:()=>{closeSheet();logout()}}[a];
   if(act)act()});
 
@@ -556,9 +568,10 @@ document.addEventListener('input',e=>{const t=e.target,v=t.value;
 document.addEventListener('change',e=>{const t=e.target;
   if(t.id==='tTime'&&t.value){const x=S.plan[ctx.k].find(y=>y.id===ctx.id);x.time=t.value;save()}
   else if(t.id==='aTime'&&t.value){A.title=$('aTitle')?.value||A.title;A.ttime=t.value;sheetRefresh()}
+  else if(t.id==='hRemind'&&t.value){const h=H(t.dataset.id);h.remind=t.value;save()}
   else if(t.id==='gParent'){const g=S.goals.find(y=>y.id===ctx.id);g.parent=t.value;save()}
   else if(t.id==='aParent')A.parent=t.value});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('sheet').classList.contains('on'))closeSheet();if(e.key==='Enter'&&e.target.id==='aTitle'){e.preventDefault();addGo()}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('sheet').classList.contains('on'))closeSheet();if(e.key==='Enter'&&e.target.id==='aTitle'){e.preventDefault();addGo()}if(e.key==='Enter'&&e.target.id==='dnote'){e.preventDefault();e.target.blur();toast('Записано')}});
 document.addEventListener('submit',e=>{const f=e.target.closest('.inl');if(!f)return;e.preventDefault();const ins=f.querySelectorAll('input'),txt=ins[0].value.trim(),kind=f.dataset.kind;if(!txt)return;
   if(kind==='plan')(S.plan[day]=S.plan[day]||[]).push({id:uid(),title:txt,time:'',done:false});
   else if(kind==='goal')S.goals.push({id:uid(),scope:gscope,period:gscope==='week'?gw:gm,title:txt,done:false,parent:''});
@@ -587,7 +600,7 @@ async function push(){if(!uidv)return;pushing++;const{error}=await SB.from('stri
 remote=()=>{clearTimeout(saveT);saveT=setTimeout(push,500)};
 async function start(session){uidv=session.user.id;window._email=session.user.email;$('auth').hidden=true;
   try{const last=localStorage.getItem('ht-user');if(last&&last!==uidv){S=BLANK();render()}localStorage.setItem('ht-user',uidv)}catch(e){}
-  await pull();
+  await pull();pushState();
   if(chan)SB.removeChannel(chan);chan=SB.channel('strik-'+uidv).on('postgres_changes',{event:'*',schema:'public',table:'strik_state',filter:'user_id=eq.'+uidv},p=>{const d=p.new&&p.new.data;if(d&&d.habits&&(d.updated||0)>(S.updated||0)){S=norm(d);try{localStorage.setItem('ht-state',JSON.stringify(S))}catch(e){}render();if(sheetRefresh)sheetRefresh()}}).subscribe()}
 function showAuth(){uidv=null;$('auth').hidden=false;setSync(false)}
 $('authForm').onsubmit=async e=>{e.preventDefault();const email=$('aEmail').value.trim(),password=$('aPass').value;$('aErr').textContent='';
@@ -595,6 +608,15 @@ $('authForm').onsubmit=async e=>{e.preventDefault();const email=$('aEmail').valu
   const{data,error}=await SB.auth.signInWithPassword({email,password});$('aBtn').disabled=false;$('aBtn').textContent='Увійти';
   if(error){$('aErr').textContent=/invalid/i.test(error.message)?'Невірний email або пароль':'Не вдалося увійти. Спробуй ще раз.';return}$('aPass').value='';start(data.session)};
 logout=async()=>{await SB.auth.signOut();if(chan)SB.removeChannel(chan);chan=null;S=BLANK();try{localStorage.removeItem('ht-state');localStorage.removeItem('ht-user')}catch(e){}render();showAuth()};
+const VAPID='BPHzrbLhBre_c6HWZGtPNCrqPqWwzbgtwkHyg_bQNpbY0bT8V_PyOVcEIaKsr8jEhFLRAA-6MGUchjHqiY5H--E';
+const b64u=s=>{const p='='.repeat((4-s.length%4)%4),b=atob((s+p).replace(/-/g,'+').replace(/_/g,'/'));return Uint8Array.from(b,c=>c.charCodeAt(0))};
+async function pushState(){try{if(!('serviceWorker' in navigator)||!('PushManager' in window))return;const reg=await navigator.serviceWorker.ready,sub=await reg.pushManager.getSubscription();window._pushOn=!!sub&&Notification.permission==='granted';if(sub&&uidv)await SB.from('strik_push').upsert({endpoint:sub.endpoint,user_id:uidv,sub:sub.toJSON(),ua:navigator.userAgent.slice(0,200)})}catch(e){}}
+window._push={
+  enable:async btn=>{try{btn.disabled=true;btn.textContent='Вмикаю…';const perm=await Notification.requestPermission();if(perm!=='granted'){toast('Дозвіл не надано');btn.disabled=false;btn.textContent='Увімкнути сповіщення';return}
+    const reg=await navigator.serviceWorker.ready;let sub=await reg.pushManager.getSubscription();if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64u(VAPID)});
+    const{error}=await SB.from('strik_push').upsert({endpoint:sub.endpoint,user_id:uidv,sub:sub.toJSON(),ua:navigator.userAgent.slice(0,200)});if(error)throw error;window._pushOn=true;toast('Сповіщення увімкнено');if(sheetRefresh)sheetRefresh()}
+    catch(e){console.error(e);toast('Не вдалося увімкнути');btn.disabled=false;btn.textContent='Увімкнути сповіщення'}},
+  test:async btn=>{btn.disabled=true;const{data,error}=await SB.functions.invoke('strik-push',{body:{test:true}});btn.disabled=false;toast(error?'Не вдалося надіслати':data&&data.sent?'Тест надіслано':'Підписку не знайдено, увімкни ще раз')}};
 SB.auth.getSession().then(({data})=>data.session?start(data.session):showAuth());
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&uidv&&!pushing)pull()});
 }
