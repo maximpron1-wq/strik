@@ -190,7 +190,7 @@ details.adv summary{list-style:none;cursor:pointer;color:var(--acc2);font-size:1
 .moods{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px;margin-bottom:14px}
 .moods button{height:64px;border-radius:18px;background:rgba(255,255,255,.08);display:grid;place-items:center;align-content:center;gap:2px;font-size:11px;color:var(--mute);transition:transform .5s var(--spring),background .25s}
 .moods button b{font:700 19px Unbounded,sans-serif;color:var(--ink)}.moods button[aria-pressed=true]{background:var(--acc);color:#1d0b04}.moods button[aria-pressed=true] b{color:#1d0b04}
-.daycard .moods{margin:4px 18px 10px}.daycard .dn{padding:0 18px 16px}.daycard .dn input{width:100%;height:46px;border:0;border-radius:14px;background:rgba(255,255,255,.07);padding:0 14px;font-size:16px;outline:none}.daycard .dn input:focus{background:rgba(255,255,255,.11)}
+.daycard .moods{margin:4px 18px 10px}.daycard .dn{padding:0 18px 16px}.daycard .dn textarea{width:100%;min-height:46px;resize:none;overflow:hidden;line-height:1.4;padding:12px 14px;display:block;border:0;border-radius:14px;background:rgba(255,255,255,.07);padding:0 14px;font-size:16px;outline:none}.daycard .dn textarea:focus{background:rgba(255,255,255,.11)}
 .diary .row{cursor:default;min-height:0}.diary .mood{width:34px;height:34px;border-radius:11px;background:var(--acc);color:#1d0b04;display:grid;place-items:center;font:700 14px Unbounded,sans-serif;flex:none}.diary .mood.o{background:rgba(255,255,255,.1);color:var(--mute)}
 .mrow{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:.5px solid rgba(255,255,255,.08)}.mrow:last-child{border:0}
 .mrow .nm{flex:1;text-align:left;padding:8px 0;font-weight:500}
@@ -369,7 +369,7 @@ function renderToday(){const t=today(),list=S.habits.filter(h=>sched(h,day)),dn=
     ${L.length>4?`<button class="more" data-a="tab" data-v="plan"><span>Ще ${L.length-4}</span>${I.chev}</button>`:''}${inl('plan','Додати задачу')}</div>`;
   {const m=S.days[day]||{};h+=`<div class="glass card daycard stag" style="--i:7"><div class="ch">Як пройшов день?<small>${m.mood?MOODS[m.mood-1]:'від 1 до 5'}</small></div>
     <div class="moods">${MOODS.map((x,i)=>`<button data-a="mood" data-n="${i+1}" aria-pressed="${m.mood===i+1}" aria-label="${x}"><b>${i+1}</b>${x}</button>`).join('')}</div>
-    <div class="dn"><input id="dnote" value="${esc(m.note||'')}" maxlength="160" placeholder="Що зробив за день, кілька слів" aria-label="Що зробив за день" enterkeyhint="done"></div></div>`}
+    <div class="dn"><textarea id="dnote" rows="2" maxlength="2000" placeholder="Що зробив за день, кілька слів" aria-label="Що зробив за день">${esc(m.note||'')}</textarea></div></div>`}
   const wg=S.goals.filter(g=>g.scope==='week'&&g.period===wk(t));
   if(wg.length)h+=`<button class="glass more stag" style="--i:8;border-radius:22px;padding:15px 18px" data-a="tab" data-v="goals"><span>Цілі тижня · ${wg.filter(g=>g.done).length} з ${wg.length}</span>${I.chev}</button>`;
   $('v-today').innerHTML=h}
@@ -438,6 +438,7 @@ function renderStats(){const t=today(),{checks,mins,goals,xp}=totals(),lv=level(
 function render(){const{xp}=totals(),lv=level(xp);$('lvl').textContent=lv.L;$('lvlT').textContent=LEVELS[Math.min(7,lv.L-1)];$('xpbar').style.width=(lv.cur/lv.need*100)+'%';
   const ae=document.activeElement,keep=ae&&ae.closest&&ae.closest('.view')&&(ae.id==='rnote'||ae.id==='dnote'||ae.closest('.inl'))?{id:ae.id,kind:ae.closest('.inl')?.dataset.kind,v:ae.value,s:ae.selectionStart}:null;
   ({today:renderToday,plan:renderPlan,goals:renderGoals,stats:renderStats})[view]();
+  const dn=$('dnote');if(dn&&dn.offsetParent){dn.style.height='auto';dn.style.height=dn.scrollHeight+'px'}
   if(keep){const el=keep.id?$(keep.id):document.querySelector(`#v-${view} .inl[data-kind="${keep.kind}"] input`);if(el){el.value=keep.v;el.focus();try{el.setSelectionRange(keep.s,keep.s)}catch(e){}}}}
 function moveDrop(squish){const b=document.querySelector(`.tabbar button[data-v="${view}"]`),d=$('drop');if(!b)return;d.style.width=b.offsetWidth+'px';d.style.transform=`translateX(${b.offsetLeft}px)`;if(squish){d.classList.remove('squish');void d.offsetWidth;d.classList.add('squish')}}
 function setView(v){const same=v===view;view=v;document.querySelectorAll('.tabbar button').forEach(x=>x.setAttribute('aria-selected',x.dataset.v===v));
@@ -562,7 +563,8 @@ document.addEventListener('input',e=>{const t=e.target,v=t.value;
   else if(t.id==='tTitle'){const x=S.plan[ctx.k]?.find(y=>y.id===ctx.id);if(x&&v.trim()){x.title=v.trim();clearTimeout(typeT);typeT=setTimeout(()=>{persist();render()},300)}}
   else if(t.id==='gTitle'){const g=S.goals.find(y=>y.id===ctx.id);if(g&&v.trim()){g.title=v.trim();clearTimeout(typeT);typeT=setTimeout(()=>{persist();render()},300)}}
   else if(t.id==='rTitle'||t.id==='rCost'){const r=S.rewards.find(y=>y.id===ctx.id);if(r){if(t.id==='rTitle'&&v.trim())r.title=v.trim();if(t.id==='rCost'&&+v>0)r.cost=Math.round(+v);clearTimeout(typeT);typeT=setTimeout(()=>{persist();render()},300)}}
-  else if(t.id==='dnote'){const m=S.days[day]=S.days[day]||{};m.note=v;persist()}
+  if(t.id==='dnote'){t.style.height='auto';t.style.height=t.scrollHeight+'px'}
+  if(t.id==='dnote'){const m=S.days[day]=S.days[day]||{};m.note=v;persist()}
   else if(t.id==='rnote'){S.reviews[rw]=v;persist()}
   else if(t.id==='aTitle')A.title=v});
 document.addEventListener('change',e=>{const t=e.target;
@@ -571,7 +573,7 @@ document.addEventListener('change',e=>{const t=e.target;
   else if(t.id==='hRemind'&&t.value){const h=H(t.dataset.id);h.remind=t.value;save()}
   else if(t.id==='gParent'){const g=S.goals.find(y=>y.id===ctx.id);g.parent=t.value;save()}
   else if(t.id==='aParent')A.parent=t.value});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('sheet').classList.contains('on'))closeSheet();if(e.key==='Enter'&&e.target.id==='aTitle'){e.preventDefault();addGo()}if(e.key==='Enter'&&e.target.id==='dnote'){e.preventDefault();e.target.blur();toast('Записано')}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('sheet').classList.contains('on'))closeSheet();if(e.key==='Enter'&&e.target.id==='aTitle'){e.preventDefault();addGo()}});
 document.addEventListener('submit',e=>{const f=e.target.closest('.inl');if(!f)return;e.preventDefault();const ins=f.querySelectorAll('input'),txt=ins[0].value.trim(),kind=f.dataset.kind;if(!txt)return;
   if(kind==='plan')(S.plan[day]=S.plan[day]||[]).push({id:uid(),title:txt,time:'',done:false});
   else if(kind==='goal')S.goals.push({id:uid(),scope:gscope,period:gscope==='week'?gw:gm,title:txt,done:false,parent:''});
