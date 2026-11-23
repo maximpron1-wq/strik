@@ -192,6 +192,17 @@ details.adv summary{list-style:none;cursor:pointer;color:var(--acc2);font-size:1
 .moods button b{font:700 19px Unbounded,sans-serif;color:var(--ink)}.moods button[aria-pressed=true]{background:var(--acc);color:#1d0b04}.moods button[aria-pressed=true] b{color:#1d0b04}
 .daycard .moods{margin:4px 18px 10px}.daycard .dn{padding:0 18px 16px}.daycard .dn textarea{width:100%;min-height:46px;resize:none;overflow:hidden;line-height:1.4;padding:12px 14px;display:block;border:0;border-radius:14px;background:rgba(255,255,255,.07);padding:0 14px;font-size:16px;outline:none}.daycard .dn textarea:focus{background:rgba(255,255,255,.11)}
 .diary .row{cursor:default;min-height:0}.diary .mood{width:34px;height:34px;border-radius:11px;background:var(--acc);color:#1d0b04;display:grid;place-items:center;font:700 14px Unbounded,sans-serif;flex:none}.diary .mood.o{background:rgba(255,255,255,.1);color:var(--mute)}
+.cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px;margin-bottom:14px}
+.cal .wd{font-size:11px;color:var(--mute);text-align:center;padding-bottom:2px}
+.cal button{aspect-ratio:1;border-radius:12px;background:rgba(255,255,255,.05);font:600 14px Unbounded,sans-serif;color:var(--mute);position:relative;transition:transform .45s var(--spring)}
+.cal button.m{color:#fff}.cal button.n::after{content:"";position:absolute;bottom:5px;left:50%;width:4px;height:4px;margin-left:-2px;border-radius:50%;background:currentColor}
+.cal button.t{box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.55)}.cal button[aria-pressed=true]{transform:scale(1.08);box-shadow:inset 0 0 0 2px #fff}
+.cal button:disabled{opacity:.25}
+.mleg{display:flex;gap:6px;align-items:center;font-size:12px;color:var(--mute);margin:-4px 0 14px}.mleg i{width:14px;height:14px;border-radius:4px}
+.entry{padding:14px 16px;border-radius:20px;background:rgba(255,255,255,.07);margin-bottom:8px;display:flex;gap:12px;align-items:flex-start;text-align:left;width:100%}
+.entry .mood{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;font:700 15px Unbounded,sans-serif;color:#fff;flex:none}
+.entry .ri{flex:1;display:grid;gap:3px}.entry .ri small{color:var(--mute);font-size:12px}.entry .ri span{white-space:pre-wrap;overflow-wrap:anywhere;font-size:15px}
+.entry mark{background:rgba(255,106,61,.35);color:inherit;border-radius:3px}
 .mrow{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:.5px solid rgba(255,255,255,.08)}.mrow:last-child{border:0}
 .mrow .nm{flex:1;text-align:left;padding:8px 0;font-weight:500}
 .ud{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.08);color:var(--mute)}
@@ -367,7 +378,7 @@ function renderToday(){const t=today(),list=S.habits.filter(h=>sched(h,day)),dn=
   const L=planOf(day),pd=L.filter(x=>x.done).length,show=[...L.filter(x=>!x.done),...L.filter(x=>x.done)].slice(0,4);
   h+=`<div class="glass card stag" style="--i:6"><div class="ch">План на день<small>${L.length?pd+' з '+L.length:''}</small></div>${show.map((x,i)=>taskRow(x,day,7+i)).join('')}
     ${L.length>4?`<button class="more" data-a="tab" data-v="plan"><span>Ще ${L.length-4}</span>${I.chev}</button>`:''}${inl('plan','Додати задачу')}</div>`;
-  {const m=S.days[day]||{};h+=`<div class="glass card daycard stag" style="--i:7"><div class="ch">Як пройшов день?<small>${m.mood?MOODS[m.mood-1]:'від 1 до 5'}</small></div>
+  {const m=S.days[day]||{};h+=`<div class="glass card daycard stag" style="--i:7"><div class="ch">Як пройшов день?<button class="chip" data-a="diary" style="height:32px;font-size:13px">Щоденник</button></div>
     <div class="moods">${MOODS.map((x,i)=>`<button data-a="mood" data-n="${i+1}" aria-pressed="${m.mood===i+1}" aria-label="${x}"><b>${i+1}</b>${x}</button>`).join('')}</div>
     <div class="dn"><textarea id="dnote" rows="2" maxlength="2000" placeholder="Що зробив за день, кілька слів" aria-label="Що зробив за день">${esc(m.note||'')}</textarea></div></div>`}
   const wg=S.goals.filter(g=>g.scope==='week'&&g.period===wk(t));
@@ -428,7 +439,8 @@ function renderStats(){const t=today(),{checks,mins,goals,xp}=totals(),lv=level(
    <div style="padding:6px 14px 14px"><textarea class="fi" id="rnote" placeholder="Що змінити наступного тижня?" maxlength="2000">${esc(S.reviews[rw]||'')}</textarea></div></div>
   <div class="kpis">${[[sch?Math.round(dn/sch*100)+'%':'—','звички за 7 днів'],[curAll,'найдовший стрік зараз'],[bestAll,'рекорд стріку'],[(mins/60).toFixed(1)+' год','у таймерах'],[ms.length?avg(ms):'—','настрій за 7 днів'],[goals,'цілей закрито']].map(([a,b],i)=>`<div class="kpi glass stag" style="--i:${3+i}"><div class="num">${a}</div><p>${b}</p></div>`).join('')}</div>
   <p class="hint stag" style="--i:9;margin:0 4px 14px;font-size:14px">${hi.length>=3&&lo.length>=3?`Настрій у дні, коли виконано 80%+ звичок: <b style="color:var(--ink)">${avg(hi)}</b> проти ${avg(lo)} в інші дні.`:'Оцінюй день хоча б тиждень, і тут з’явиться зв’язок настрою зі звичками.'}</p>
-  ${(()=>{const L=Array.from({length:7},(_,i)=>add(t,-i)).filter(k=>S.days[k]&&(S.days[k].mood||S.days[k].note));return L.length?`<div class="glass card diary stag" style="--i:10"><div class="ch">Щоденник<small>останні 7 днів</small></div>${L.map(k=>{const m=S.days[k];return `<div class="row"><span class="mood${m.mood?'':' o'}">${m.mood||'—'}</span><div class="ri"><b style="font-size:14px;color:var(--mute);font-weight:500">${dayName(k)}</b><span>${esc(m.note||MOODS[(m.mood||1)-1])}</span></div></div>`}).join('')}</div>`:''})()}
+  ${(()=>{const L=Array.from({length:7},(_,i)=>add(t,-i)).filter(k=>S.days[k]&&(S.days[k].mood||S.days[k].note));return `<div class="glass card diary stag" style="--i:10"><div class="ch">Щоденник<button class="chip" data-a="diary" style="height:32px;font-size:13px">Усі записи</button></div>${L.map(k=>{const m=S.days[k];return `<div class="row" data-a="diary" data-k="${k}" style="cursor:pointer"><span class="mood${m.mood?'':' o'}" style="${m.mood?'background:'+MC[m.mood]+';color:#fff':''}">${m.mood||'—'}</span><div class="ri"><b style="font-size:14px;color:var(--mute);font-weight:500">${dayName(k)}</b><span style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${esc(m.note||MOODS[(m.mood||1)-1])}</span></div></div>`}).join('')||'<p class="hint" style="padding:6px 18px 14px">Оцінюй день на головному екрані, і записи з\u2019являться тут.</p>'}</div>`})()}
+
   <div class="glass card stag" style="--i:10"><div class="ch">18 тижнів</div><div class="heat">${cells}</div><div class="legend">менше <i style="background:rgba(255,255,255,.07)"></i><i style="background:#5a2a1c"></i><i style="background:#a8442a"></i><i style="background:var(--acc)"></i> більше · <i style="background:var(--ice)"></i> заморозка</div></div>
   ${S.habits.length?`<div class="glass card stag" style="--i:11"><div class="ch">Звички за 30 днів</div>${S.habits.map(h=>{let s=0,d=0;for(let i=0;i<30;i++){const k=add(t,-i);if(sched(h,k)){s++;if(isDone(h,k))d++}}const p=s?Math.round(d/s*100):0;
     return `<div class="row" data-a="hsheet" data-id="${h.id}" style="display:grid;gap:7px;min-height:0"><div style="display:flex;justify-content:space-between;gap:10px"><b style="font-weight:600">${esc(h.name)}</b><span class="hint">${p}% · рекорд ${best(h)}</span></div><div class="bar"><i style="width:${p}%"></i></div></div>`}).join('')}</div>`:''}
@@ -506,6 +518,23 @@ function rewardBody(id){const r=S.rewards.find(x=>x.id===id);if(!r)return sh('В
   return sh('Нагорода')+`<div class="fld"><input class="fi" id="rTitle" value="${esc(r.title)}" maxlength="80" aria-label="Назва"></div><div class="fld"><label for="rCost">Ціна, XP</label><input class="fi" id="rCost" type="number" inputmode="numeric" value="${r.cost}"></div><button class="big danger" data-a="rdel" id="rdel">Видалити</button>`}
 function dayBody(){const m=S.days[day]||{};return sh(dayName(day)+': як пройшов день?')+`<div class="moods">${MOODS.map((t,i)=>`<button data-a="mood" data-n="${i+1}" aria-pressed="${m.mood===i+1}" aria-label="${t}"><b>${i+1}</b>${t}</button>`).join('')}</div>
   <div class="fld"><textarea class="fi" id="dnote" placeholder="Що вдалося, що заважало, що зробиш інакше завтра" maxlength="2000">${esc(m.note||'')}</textarea></div><button class="big" data-a="close">Готово</button>`}
+const MC=['','#4a5068','#6e3a2a','#a8442a','#d9562f','#ff6a3d'];
+let D={m:today().slice(0,7),sel:null,q:''};
+function hl(t,q){const e=esc(t);if(!q)return e;const i=t.toLowerCase().indexOf(q.toLowerCase());if(i<0)return e;return esc(t.slice(0,i))+'<mark>'+esc(t.slice(i,i+q.length))+'</mark>'+esc(t.slice(i+q.length))}
+function entryRow(k,q){const m=S.days[k]||{},L=S.habits.filter(h=>sched(h,k)),dn=L.filter(h=>isDone(h,k)).length,d=parse(k);
+  return `<button class="entry" data-a="dopen" data-k="${k}"><span class="mood" style="background:${m.mood?MC[m.mood]:'rgba(255,255,255,.1)'}">${m.mood||'—'}</span><div class="ri"><small>${d.getDate()} ${MON[d.getMonth()]}, ${DFULL[d.getDay()]}${m.mood?' · '+MOODS[m.mood-1]:''}${L.length?' · звички '+dn+'/'+L.length:''}</small><span>${m.note?hl(m.note,q):'<i style="color:var(--mute)">Без коментаря</i>'}</span></div></button>`}
+function diaryBody(){const q=D.q.trim(),t=today();let b=sh('Щоденник')+`<div class="fld"><input class="fi" id="dq" value="${esc(D.q)}" placeholder="Пошук по записах" aria-label="Пошук по записах" enterkeyhint="search"></div>`;
+  if(q){const L=Object.keys(S.days).filter(k=>(S.days[k].note||'').toLowerCase().includes(q.toLowerCase())).sort().reverse();
+    return b+(L.length?`<p class="hint" style="margin:0 2px 10px">Знайдено: ${L.length}</p>`+L.map(k=>entryRow(k,q)).join(''):'<p class="hint">Нічого не знайдено.</p>')}
+  const y=+D.m.slice(0,4),mo=+D.m.slice(5)-1,first=new Date(y,mo,1),off=(first.getDay()+6)%7,n=new Date(y,mo+1,0).getDate();
+  const ks=Array.from({length:n},(_,i)=>key(new Date(y,mo,i+1))),withE=ks.filter(k=>S.days[k]&&(S.days[k].mood||S.days[k].note));
+  const ms=withE.map(k=>S.days[k].mood).filter(Boolean),avg=ms.length?(ms.reduce((a,c)=>a+c,0)/ms.length).toFixed(1):null;
+  b+=`<div class="navrow"><button class="rb press" style="background:rgba(255,255,255,.08)" data-a="dmon" data-n="-1" aria-label="Попередній місяць">‹</button><span><b style="color:var(--ink)">${mLabel(D.m)}</b>${avg?' · середній настрій '+avg:''}</span><button class="rb press" style="background:rgba(255,255,255,.08)" data-a="dmon" data-n="1" aria-label="Наступний місяць" ${D.m>=t.slice(0,7)?'disabled':''}>›</button></div>
+   <div class="cal">${['Пн','Вт','Ср','Чт','Пт','Сб','Нд'].map(x=>`<span class="wd">${x}</span>`).join('')}${'<span></span>'.repeat(off)}${ks.map((k,i)=>{const m=S.days[k]||{};return `<button class="${m.mood?'m':''}${m.note?' n':''}${k===t?' t':''}" style="${m.mood?'background:'+MC[m.mood]:''}" data-a="dsel" data-k="${k}" aria-pressed="${D.sel===k}" ${k>t?'disabled':''} aria-label="${i+1} ${MON[mo]}${m.mood?', настрій '+m.mood:''}">${i+1}</button>`}).join('')}</div>
+   <div class="mleg">1 <i style="background:${MC[1]}"></i><i style="background:${MC[2]}"></i><i style="background:${MC[3]}"></i><i style="background:${MC[4]}"></i><i style="background:${MC[5]}"></i> 5 · крапка — є коментар</div>`;
+  if(D.sel)b+=entryRow(D.sel)+`<p class="hint" style="margin:-2px 4px 14px">Тапни запис, щоб відкрити цей день і дописати.</p>`;
+  else b+=withE.length?withE.slice().reverse().map(k=>entryRow(k)).join(''):'<p class="hint">У цьому місяці записів немає.</p>';
+  return b}
 function settingsBody(){return sh('Налаштування')+`<div class="fld"><span class="lab">Мої звички · тапни, щоб змінити</span>${S.habits.map((h,i)=>`<div class="mrow"><button class="nm" data-a="hsheet" data-id="${h.id}">${esc(h.name)}</button><button class="ud" data-a="hmove" data-id="${h.id}" data-n="-1" ${i?'':'disabled'} aria-label="Вище">↑</button><button class="ud" data-a="hmove" data-id="${h.id}" data-n="1" ${i<S.habits.length-1?'':'disabled'} aria-label="Нижче">↓</button></div>`).join('')||'<p class="hint">Ще немає звичок.</p>'}</div>
   <div class="fld"><span class="lab">Сповіщення на цьому пристрої</span>${(()=>{const ios=/iPhone|iPad/.test(navigator.userAgent),standalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone;
      if(!('serviceWorker' in navigator)||!('PushManager' in window)||!('Notification' in window))return ios&&!standalone?'<p class="hint" style="font-size:14px">На iPhone пуші працюють лише з іконки на головному екрані: Safari → Поділитися → На початковий екран, і відкрий Стрік звідти.</p>':'<p class="hint" style="font-size:14px">Цей браузер не підтримує пуш-сповіщення.</p>';
@@ -554,6 +583,9 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(!b
    tmove:()=>{const L=S.plan[ctx.k],t=L.find(x=>x.id===ctx.id);S.plan[ctx.k]=L.filter(x=>x!==t);if(!S.plan[ctx.k].length)delete S.plan[ctx.k];const nk=add(ctx.k,1);(S.plan[nk]=S.plan[nk]||[]).push(t);closeSheet();save();toast('Перенесено на '+dayName(nk).toLowerCase())},
    tdel:()=>confirm2(b,'Точно видалити?',()=>{S.plan[ctx.k]=S.plan[ctx.k].filter(x=>x.id!==ctx.id);if(!S.plan[ctx.k].length)delete S.plan[ctx.k];closeSheet();save()}),
    penable:()=>window._push&&window._push.enable(b),ptest:()=>window._push&&window._push.test(b),
+   diary:()=>{D={m:(b.dataset.k||today()).slice(0,7),sel:b.dataset.k||null,q:''};openSheet(diaryBody)},
+   dmon:()=>{D.m=mAdd(D.m,n);D.sel=null;sheetRefresh()},dsel:()=>{D.sel=D.sel===b.dataset.k?null:b.dataset.k;sheetRefresh()},
+   dopen:()=>{day=b.dataset.k;closeSheet();setView('today');setTimeout(()=>{const c=document.querySelector('.daycard');if(c)c.scrollIntoView({behavior:'smooth',block:'center'})},450)},
    logout:()=>{closeSheet();logout()}}[a];
   if(act)act()});
 
@@ -566,7 +598,8 @@ document.addEventListener('input',e=>{const t=e.target,v=t.value;
   if(t.id==='dnote'){t.style.height='auto';t.style.height=t.scrollHeight+'px'}
   if(t.id==='dnote'){const m=S.days[day]=S.days[day]||{};m.note=v;persist()}
   else if(t.id==='rnote'){S.reviews[rw]=v;persist()}
-  else if(t.id==='aTitle')A.title=v});
+  else if(t.id==='aTitle')A.title=v;
+  else if(t.id==='dq'){D.q=v;sheetRefresh()}});
 document.addEventListener('change',e=>{const t=e.target;
   if(t.id==='tTime'&&t.value){const x=S.plan[ctx.k].find(y=>y.id===ctx.id);x.time=t.value;save()}
   else if(t.id==='aTime'&&t.value){A.title=$('aTitle')?.value||A.title;A.ttime=t.value;sheetRefresh()}
