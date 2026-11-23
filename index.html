@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Стрік</title>
+<link rel="icon" type="image/svg+xml" href="icon.svg">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0d0e11">
+<meta name="apple-mobile-web-app-title" content="Стрік">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=Unbounded:wght@500;700&display=swap" rel="stylesheet">
+<style>
+/* VOICE: тихий, зібраний, як інструмент — без шуму, лише прогрес
+   IDEA: щоденник-журнал змін, де кожен день — клітинка, що жевріє
+   PICTURE: живий список звичок і план дня, рівень/XP вгорі, теплокарта в прогресі
+   COLOUR and TYPE: графіт #0d0e11, акцент — жар #ff6a3d, лід #8ccfff тільки для заморозок; Unbounded для цифр, Onest для тексту
+   LAYOUT: одна колонка до 720px, п'ять вкладок знизу, все працює одним пальцем */
+:root{color-scheme:dark;--bg:#0d0e11;--card:#16181d;--line:#24272e;--ink:#eceef2;--mute:#8b909b;--acc:#ff6a3d;--acc2:#ff8f6b;--ice:#8ccfff}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Onest,system-ui,sans-serif;overflow-x:clip;-webkit-tap-highlight-color:transparent}
+.wrap{max-width:720px;margin:0 auto;padding:calc(20px + env(safe-area-inset-top)) max(4vw,16px) 120px}
+.auth{position:fixed;inset:0;z-index:20;background:var(--bg);display:grid;place-items:center;padding:24px}.auth form{width:min(400px,100%);display:grid;gap:14px}.auth .logo{display:flex;align-items:center;gap:12px;font-family:Unbounded,sans-serif;font-weight:700;font-size:30px;margin-bottom:6px}.auth .logo svg{width:48px;height:48px}.auth .in{width:100%;height:50px}.auth .err{color:#ff7b7b;font-size:14px;min-height:20px;margin:0}
+.loading .wrap{opacity:.4}
+.num{font-family:Unbounded,Onest,sans-serif;font-weight:700;letter-spacing:-.01em}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none}button:disabled{opacity:.35;cursor:default}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px;border-radius:10px}
+h1.t{font-family:Unbounded,Onest,sans-serif;font-weight:700;font-size:clamp(26px,6vw,36px);line-height:1.05;margin:0}
+.brand{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}.brand .logo{display:flex;align-items:center;gap:10px;font-family:Unbounded,Onest,sans-serif;font-weight:700;font-size:22px;letter-spacing:-.02em}.brand svg{width:34px;height:34px;flex:none}
+.top{display:flex;align-items:center;gap:14px;margin-bottom:22px}
+.lvl{width:56px;height:56px;border-radius:16px;background:var(--acc);color:#1a0b05;display:grid;place-items:center;font-size:22px;flex:none}
+.xpbox{flex:1}.xpbox b{font-weight:600}.xpbox small{color:var(--mute);font-size:13px}
+.bar{height:8px;border-radius:8px;background:var(--line);overflow:hidden;margin-top:6px}.bar i{display:block;height:100%;background:var(--acc);border-radius:8px;transition:width .5s}
+.sync{font-size:13px;color:var(--mute);display:flex;align-items:center;gap:6px;white-space:nowrap}.sync i{width:8px;height:8px;border-radius:50%;background:var(--mute)}.sync.on i{background:#5fd38d}
+.daynav{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:4px 0 14px}
+.sub{color:var(--mute);font-size:14px}
+.arrows{display:flex;gap:6px}.arrows button{width:44px;height:44px;border-radius:12px;background:var(--card);font-size:20px}
+.card{background:var(--card);border-radius:18px;padding:16px;margin-bottom:14px}
+.ring{display:flex;align-items:center;gap:14px}.ring .big{font-size:30px}.ring p{margin:0;color:var(--mute);font-size:14px}
+.banner{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;background:color-mix(in srgb,var(--acc) 12%,var(--card));border:1px solid color-mix(in srgb,var(--acc) 35%,transparent)}
+.banner b{display:block}.banner span{color:var(--mute);font-size:14px}
+.grp{font-size:13px;color:var(--mute);margin:16px 2px 8px;font-weight:600}
+.list{display:grid;gap:10px}
+.h{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px 14px 14px 16px;transition:border-color .2s,background .2s;width:100%;text-align:left}
+.h.done{border-color:color-mix(in srgb,var(--acc) 55%,transparent);background:color-mix(in srgb,var(--acc) 9%,var(--card))}
+.h.fz{border-color:color-mix(in srgb,var(--ice) 45%,transparent)}
+.name{font-weight:600;font-size:17px;overflow-wrap:anywhere}
+.nm{display:flex;align-items:center;gap:6px}
+.meta{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:13px;color:var(--mute);margin-top:3px;align-items:center}
+.streak{display:inline-flex;align-items:center;gap:3px;color:var(--acc2);font-weight:600}.streak.zero{color:var(--mute);font-weight:400}
+.tag{padding:1px 8px;border-radius:20px;background:var(--line);font-size:12px}
+.chk{width:52px;height:52px;border-radius:16px;border:2px solid var(--line);display:grid;place-items:center;transition:transform .15s}
+.chk svg{opacity:0}.done .chk{background:var(--acc);border-color:var(--acc)}.done .chk svg{opacity:1}.chk:active{transform:scale(.92)}
+.tm{display:flex;gap:6px;align-items:center}
+.tbtn{height:44px;padding:0 14px;border-radius:12px;background:var(--line);font-weight:600;font-size:14px;white-space:nowrap}.tbtn.run{background:var(--acc);color:#1a0b05}
+.prog{grid-column:1/-1;height:6px;border-radius:6px;background:var(--line);overflow:hidden}.prog i{display:block;height:100%;background:var(--acc)}
+.minirow{grid-column:1/-1;display:flex;gap:6px;flex-wrap:wrap}
+.chip{height:36px;padding:0 12px;border-radius:10px;background:var(--line);font-size:14px;color:var(--ink);white-space:nowrap}
+.chip.fzb{color:var(--ice)}.chip[aria-pressed=true]{background:var(--acc);color:#1a0b05;font-weight:600}
+.ico{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;color:var(--mute);flex:none}.ico:hover{background:var(--line);color:var(--ink)}
+.empty{text-align:center;padding:40px 16px;border:1px dashed var(--line);border-radius:20px;color:var(--mute)}.empty h2{color:var(--ink);font-size:22px;margin:0 0 6px}
+.primary{height:50px;padding:0 22px;border-radius:14px;background:var(--acc);color:#1a0b05;font-weight:700;font-size:16px;white-space:nowrap}
+.ghost{height:50px;padding:0 18px;border-radius:14px;background:var(--line);font-weight:600;white-space:nowrap}
+.sm{height:40px;padding:0 14px;border-radius:12px;font-size:14px}
+.tabs{position:fixed;left:0;right:0;bottom:0;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(12px);border-top:1px solid var(--line);display:flex;justify-content:center;gap:2px;padding:8px 6px calc(8px + env(safe-area-inset-bottom))}
+.tabs button{flex:1;max-width:140px;height:48px;border-radius:12px;color:var(--mute);font-weight:600;font-size:13px}.tabs button[aria-selected=true]{background:var(--card);color:var(--ink)}
+.fab{position:fixed;right:max(4vw,16px);bottom:84px;width:58px;height:58px;border-radius:18px;background:var(--acc);color:#1a0b05;font-size:30px;line-height:1;box-shadow:0 8px 24px #0008}
+.sec{margin:26px 0 10px;font-size:18px;font-weight:600}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+.kpi{background:var(--card);border-radius:16px;padding:14px}.kpi .num{font-size:24px}.kpi p{margin:2px 0 0;color:var(--mute);font-size:13px}
+.heat{display:grid;grid-auto-flow:column;grid-template-rows:repeat(7,1fr);gap:4px;background:var(--card);border-radius:16px;padding:14px;overflow-x:auto}
+.heat i{width:clamp(12px,3.2vw,18px);aspect-ratio:1;border-radius:4px;background:var(--line)}
+.legend{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:12px;color:var(--mute);margin-top:8px}.legend i{width:12px;height:12px;border-radius:3px}
+.rows{background:var(--card);border-radius:16px;padding:6px 14px}
+.row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;padding:10px 0;border-bottom:1px solid var(--line);font-size:15px;align-items:center}.row:last-child{border:0}
+.row .r{text-align:right;color:var(--mute);font-size:13px;white-space:nowrap}.row .bar{grid-column:1/-1;margin:0;height:6px}
+.badges{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.badge{background:var(--card);border-radius:16px;padding:14px;opacity:.4}.badge.got{opacity:1;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--acc) 50%,transparent)}.badge b{display:block}.badge small{color:var(--mute);font-size:13px}
+.fzinfo{display:flex;align-items:center;gap:8px;color:var(--ice);font-size:14px;margin:12px 0}
+.ghead{display:flex;align-items:center;justify-content:space-between;gap:10px}.ghead h2{margin:0;font-size:19px}.ghead small{display:block;color:var(--mute);font-size:13px;font-weight:400}
+.ghead .arrows button{width:40px;height:40px;background:var(--line)}
+.gprog{display:flex;align-items:center;gap:10px;margin:12px 0 6px;font-size:13px;color:var(--mute)}.gprog .bar{flex:1;margin:0}
+.g{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}.g:last-of-type{border:0}
+.gchk{width:30px;height:30px;border-radius:9px;border:2px solid var(--line);display:grid;place-items:center;flex:none}.gchk svg{opacity:0;width:18px}
+.g.done .gchk{background:var(--acc);border-color:var(--acc)}.g.done .gchk svg{opacity:1}
+.gt{flex:1;overflow-wrap:anywhere}.gt small{display:block;color:var(--mute);font-size:12px}.g.done .gt>span{color:var(--mute);text-decoration:line-through}
+.time{font-family:Unbounded,sans-serif;font-size:13px;color:var(--acc2);white-space:nowrap;min-width:46px}
+.gadd{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.in{height:44px;border-radius:12px;border:1px solid var(--line);background:var(--bg);padding:0 12px;font-size:16px}
+.gadd .in.grow{flex:1 1 180px}.gadd select.in{flex:1 1 100%}
+.gadd .addb{height:44px;padding:0 16px;border-radius:12px;background:var(--acc);color:#1a0b05;font-weight:700}
+.carry{margin-top:10px;width:100%;height:40px;border-radius:10px;background:var(--line);font-size:14px}
+.glink{display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--card);border-radius:14px;padding:12px 16px;margin-top:10px;width:100%;text-align:left;font-size:15px}.glink span{color:var(--mute);white-space:nowrap}
+.strip{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;margin-bottom:14px}
+.strip button{background:var(--card);border-radius:12px;padding:8px 0;display:grid;gap:2px;justify-items:center;font-size:12px;color:var(--mute)}
+.strip button b{font-family:Unbounded,sans-serif;font-size:16px;color:var(--ink)}.strip button[aria-current=true]{background:var(--acc);color:#1a0b05}.strip button[aria-current=true] b{color:#1a0b05}
+.strip i{width:6px;height:6px;border-radius:50%;background:transparent}.strip i.has{background:var(--mute)}.strip i.all{background:var(--acc2)}
+.moods{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin:10px 0}
+.moods button{height:56px;border-radius:12px;background:var(--line);display:grid;place-items:center;font-size:12px;line-height:1.1}
+.moods button b{font-family:Unbounded,sans-serif;font-size:17px}.moods button[aria-pressed=true]{background:var(--acc);color:#1a0b05}
+textarea.in{width:100%;height:auto;min-height:84px;padding:10px 12px;resize:vertical;line-height:1.45}
+.insight{font-size:15px;margin:12px 0 0;color:var(--ink)}.insight span{color:var(--mute)}
+.reward{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}.reward:last-of-type{border:0}
+.cost{font-family:Unbounded,sans-serif;font-size:13px;color:var(--acc2);white-space:nowrap}
+.hint{font-size:13px;color:var(--mute);margin:0}
+.mrow{display:flex;align-items:center;gap:4px}.mrow .h{flex:1}
+.updown{display:grid;gap:4px}.updown button{width:36px;height:30px;border-radius:8px;background:var(--card);color:var(--mute)}
+dialog{border:0;border-radius:22px;background:var(--card);color:var(--ink);padding:0;width:min(520px,94vw);max-height:90vh}
+dialog::backdrop{background:#000a}
+.form{padding:22px;display:grid;gap:16px}.form h2{margin:0;font-size:22px}
+.form label{font-size:13px;color:var(--mute);display:block;margin-bottom:6px}
+.form .in{width:100%;height:48px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.actions{display:flex;gap:8px;justify-content:space-between;flex-wrap:wrap}
+.danger{color:#ff7b7b}
+.toast{position:fixed;left:50%;bottom:150px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-weight:600;opacity:0;transition:.3s;pointer-events:none;white-space:nowrap;z-index:9}
+.toast.show{opacity:1;transform:translateX(-50%)}
+[hidden]{display:none!important}
+@media(max-width:420px){.tabs button{font-size:12px}.moods button span{display:none}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="auth" id="auth" hidden><form id="authForm" novalidate>
+  <div class="logo"><svg viewBox="0 0 64 64" aria-hidden="true"><rect x="4" y="44" width="16" height="16" rx="4" fill="#5a2a1c"/><rect x="24" y="44" width="16" height="16" rx="4" fill="#a8442a"/><rect x="44" y="44" width="16" height="16" rx="4" fill="#ff6a3d"/><rect x="4" y="24" width="16" height="16" rx="4" fill="#24272e"/><rect x="24" y="24" width="16" height="16" rx="4" fill="#a8442a"/><rect x="44" y="24" width="16" height="16" rx="4" fill="#ff6a3d"/><rect x="4" y="4" width="16" height="16" rx="4" fill="#24272e"/><rect x="24" y="4" width="16" height="16" rx="4" fill="#24272e"/><rect x="44" y="4" width="16" height="16" rx="4" fill="#ff6a3d"/></svg>Стрік</div>
+  <p class="hint" style="font-size:15px;margin:0 0 6px">Увійди тим самим акаунтом, що й у My Orders. Звички, план і цілі синхронізуються між телефоном і комп'ютером.</p>
+  <div><label class="hint" for="aEmail" style="display:block;margin-bottom:6px">Email</label><input class="in" id="aEmail" type="email" autocomplete="email" inputmode="email" placeholder="name@gmail.com"></div>
+  <div><label class="hint" for="aPass" style="display:block;margin-bottom:6px">Пароль</label><input class="in" id="aPass" type="password" autocomplete="current-password"></div>
+  <p class="err" id="aErr"></p>
+  <button class="primary" type="submit" id="aBtn">Увійти</button>
+</form></div>
+<div class="wrap">
+  <div class="brand"><div class="logo"><svg viewBox="0 0 64 64" role="img" aria-label="Логотип Стрік"><rect x="4" y="44" width="16" height="16" rx="4" fill="#5a2a1c"/><rect x="24" y="44" width="16" height="16" rx="4" fill="#a8442a"/><rect x="44" y="44" width="16" height="16" rx="4" fill="#ff6a3d"/><rect x="4" y="24" width="16" height="16" rx="4" fill="#24272e"/><rect x="24" y="24" width="16" height="16" rx="4" fill="#a8442a"/><rect x="44" y="24" width="16" height="16" rx="4" fill="#ff6a3d"/><rect x="4" y="4" width="16" height="16" rx="4" fill="#24272e"/><rect x="24" y="4" width="16" height="16" rx="4" fill="#24272e"/><rect x="44" y="4" width="16" height="16" rx="4" fill="#ff6a3d"/></svg>Стрік</div><div class="sync" id="sync"><i></i><span>Локально</span></div></div>
+  <div class="top">
+    <div class="lvl num" id="lvl">1</div>
+    <div class="xpbox"><b id="title">Новачок</b> <small id="xptxt"></small><div class="bar"><i id="xpbar" style="width:0"></i></div></div>
+  </div>
+
+  <section id="v-today">
+    <div class="daynav"><div><h1 class="t" id="dayTitle">Сьогодні</h1><div class="sub" id="daySub"></div></div>
+      <div class="arrows"><button data-a="dnav" data-n="-1" aria-label="Попередній день">‹</button><button data-a="dnav" data-n="1" class="nextd" aria-label="Наступний день">›</button></div></div>
+    <div id="banner"></div>
+    <div class="card ring" id="ring" hidden><div class="big num" id="ringNum">0/0</div><div><b id="ringT"></b><p id="ringP"></p></div></div>
+    <div id="list"></div>
+    <div class="fzinfo" id="fzinfo"></div>
+    <div class="card" id="todayPlan"></div>
+    <div class="card" id="moodCard"></div>
+    <button class="glink" id="glink" data-a="tab" data-v="goals"></button>
+  </section>
+
+  <section id="v-plan" hidden>
+    <div class="daynav"><div><h1 class="t">План</h1><div class="sub" id="planSub"></div></div>
+      <div class="arrows"><button data-a="pnav" data-n="-7" aria-label="Попередній тиждень">‹</button><button data-a="pnav" data-n="7" aria-label="Наступний тиждень">›</button></div></div>
+    <div class="strip" id="strip"></div>
+    <div class="card" id="planBox"></div>
+  </section>
+
+  <section id="v-goals" hidden>
+    <h1 class="t" style="margin:4px 0 6px">Цілі</h1>
+    <p class="hint" style="margin-bottom:14px">Тижневе завдання дає +25 XP, місячне +50 XP. Тижневі завдання можна прив'язати як кроки до місячної цілі.</p>
+    <div id="goalsBox"></div>
+    <div class="card" id="rewardsBox"></div>
+  </section>
+
+  <section id="v-stats" hidden>
+    <h1 class="t" style="margin:4px 0 14px">Прогрес</h1>
+    <div class="card" id="reviewBox"></div>
+    <div class="kpis" id="kpis"></div>
+    <p class="insight" id="moodInsight"></p>
+    <div class="sec">Останні 18 тижнів</div>
+    <div class="heat" id="heat"></div>
+    <div class="legend">менше <i style="background:var(--line)"></i><i style="background:#5a2a1c"></i><i style="background:#a8442a"></i><i style="background:var(--acc)"></i> більше · <i style="background:var(--ice)"></i> заморозка</div>
+    <div class="sec">Звички за 30 днів</div>
+    <div class="rows" id="perHabit"></div>
+    <div class="sec">Досягнення</div>
+    <div class="badges" id="badges"></div>
+  </section>
+
+  <section id="v-manage" hidden>
+    <h1 class="t" style="margin:4px 0 6px">Мої звички</h1>
+    <p class="hint" style="margin-bottom:14px">Стрілками змінюєш порядок, олівцем редагуєш. Заморозок на місяць: <button class="chip" data-a="fzcfg" id="fzCfg"></button></p>
+    <div class="list" id="mlist"></div>
+    <div class="card" style="margin-top:22px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><span class="hint" id="whoami"></span><button class="ghost sm" data-a="logout">Вийти</button></div>
+  </section>
+</div>
+
+<button class="fab" id="fab" data-a="new" aria-label="Додати звичку">+</button>
+<nav class="tabs" role="tablist">
+  <button role="tab" data-a="tab" data-v="today" aria-selected="true">Сьогодні</button>
+  <button role="tab" data-a="tab" data-v="plan" aria-selected="false">План</button>
+  <button role="tab" data-a="tab" data-v="goals" aria-selected="false">Цілі</button>
+  <button role="tab" data-a="tab" data-v="stats" aria-selected="false">Прогрес</button>
+  <button role="tab" data-a="tab" data-v="manage" aria-selected="false">Звички</button>
+</nav>
+
+<dialog id="dlg"><form class="form" id="form" novalidate>
+  <h2 id="fTitle">Нова звичка</h2>
+  <div><label for="fName">Назва</label><input class="in" type="text" id="fName" maxlength="60" placeholder="Напр. Тренування"></div>
+  <div id="presetBox"><label>Швидкий старт</label><div class="chips" id="presets"></div></div>
+  <div><label>Сфера</label><div class="chips" id="fSphere"></div></div>
+  <div><label>Як відмічати</label><div class="chips" id="fType"></div><p class="hint" id="typeHint" style="margin-top:6px"></p></div>
+  <div id="targetBox"><label for="fTarget">Ціль, хвилин на день</label><input class="in" type="number" id="fTarget" min="1" max="600" value="30"></div>
+  <div><label>Час дня</label><div class="chips" id="fPart"></div></div>
+  <div><label>Дні</label><div class="chips" id="fDays"></div></div>
+  <div class="actions"><button type="button" class="ghost danger" id="fDel" hidden>Видалити</button><span style="flex:1"></span><button type="button" class="ghost" id="fCancel">Скасувати</button><button class="primary" type="button" id="fSave">Зберегти</button></div>
+</form></dialog>
+
+<dialog id="dlg2"><form class="form" id="pform" novalidate>
+  <h2 id="pTitle"></h2>
+  <div id="pTextBox"><label for="pIn" id="pLabel"></label><input class="in" type="text" id="pIn" maxlength="120"></div>
+  <div id="pTimeBox"><label for="pTime">Час (необов'язково)</label><input class="in" type="time" id="pTime"></div>
+  <div id="pNumBox"><label for="pNum" id="pNumLabel"></label><input class="in" type="number" id="pNum" min="0"></div>
+  <div id="pSelBox"><label for="pSel" id="pSelLabel"></label><select class="in" id="pSel"></select></div>
+  <div class="actions"><button type="button" class="ghost danger" id="pDel" hidden>Видалити</button><button type="button" class="ghost" id="pMove" hidden></button><span style="flex:1"></span><button type="button" class="ghost" id="pCancel">Скасувати</button><button class="primary" type="button" id="pSave">Зберегти</button></div>
+</form></dialog>
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+{
+const $=id=>document.getElementById(id);
+const FLAME='<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2s5 5 5 10a5 5 0 0 1-10 0c0-2 1-3.5 1-3.5S9 11 11 11c0-4 1-9 1-9z"/></svg>';
+const SNOW='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2v20M3.3 7l17.4 10M3.3 17L20.7 7"/></svg>';
+const PENCIL='<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16v4zM14 6l4 4"/></svg>';
+const TICK='<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#1a0b05" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+const SPHERES={body:'Тіло і здоров’я',work:'Робота і проєкти',grow:'Саморозвиток',quit:'Відмова від шкідливого'};
+const TYPES={check:'Так / ні',timer:'Таймер',quit:'Відмова'};
+const PARTS={morning:'Ранок',day:'День',evening:'Вечір',any:'Будь-коли'};
+const THINTS={check:'Одне натискання: зробив чи ні.',timer:'Запускаєш таймер або вказуєш хвилини. Виконано, коли набрав ціль.',quit:'Відмічаєш «чистий» день. Стрік = скільки днів поспіль тримаєшся.'};
+const DOW=[1,2,3,4,5,6,0],DN=['Нд','Пн','Вт','Ср','Чт','Пт','Сб'],DFULL=['неділя','понеділок','вівторок','середа','четвер','пʼятниця','субота'];
+const MON=['січня','лютого','березня','квітня','травня','червня','липня','серпня','вересня','жовтня','листопада','грудня'];
+const MNOM=['Січень','Лютий','Березень','Квітень','Травень','Червень','Липень','Серпень','Вересень','Жовтень','Листопад','Грудень'];
+const MOODS=['Важкий','Так собі','Норм','Добрий','Вогонь'];
+const PRESETS=[['Тренування','body','check',0,'morning'],['Сон до 23:30','body','check',0,'evening'],['Глибока робота','work','timer',90,'day'],['Монтаж без відволікань','work','timer',60,'day'],['Читання','grow','timer',20,'evening'],['Англійська','grow','timer',15,'any'],['Без соцмереж до 12:00','quit','quit',0,'morning'],['Без солодкого','quit','quit',0,'any']];
+const LEVELS=['Новачок','Учень','Практик','Стабільний','Дисциплінований','Майстер','Машина','Легенда'];
+
+const key=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const parse=k=>{const[a,b,c]=k.split('-').map(Number);return new Date(a,b-1,c)};
+const add=(k,n)=>{const d=parse(k);d.setDate(d.getDate()+n);return key(d)};
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=()=>Math.random().toString(36).slice(2,9);
+const today=()=>key(new Date());
+const wk=k=>add(k,-((parse(k).getDay()+6)%7));
+const mAdd=(m,n)=>key(new Date(+m.slice(0,4),+m.slice(5)-1+n,1)).slice(0,7);
+const wLabel=w=>{const a=parse(w),b=parse(add(w,6));return a.getMonth()===b.getMonth()?a.getDate()+'–'+b.getDate()+' '+MON[a.getMonth()]:a.getDate()+' '+MON[a.getMonth()]+' – '+b.getDate()+' '+MON[b.getMonth()]};
+const mLabel=m=>MNOM[+m.slice(5)-1]+' '+m.slice(0,4);
+const wMonth=w=>add(w,3).slice(0,7);
+
+/* state: always a plain, writable deep copy */
+const BLANK=()=>({habits:[],log:{},frozen:{},timer:null,fpm:3,goals:[],plan:{},days:{},reviews:{},rewards:[],spent:[],updated:0});
+function norm(d){const o=Object.assign(BLANK(),JSON.parse(JSON.stringify(d||{})));for(const h of o.habits){h.part=h.part||'any';h.days=h.days||[0,1,2,3,4,5,6];h.target=h.target||30}return o}
+let S=BLANK();
+try{const l=JSON.parse(localStorage.getItem('ht-state'));if(l&&l.habits)S=norm(l)}catch(e){}
+let remote=()=>{},logout=()=>{};
+let view='today',day=today(),ref=null,saveT=null,editId=null,gw=wk(today()),gm=today().slice(0,7),rw=wk(today());
+
+const H=id=>S.habits.find(h=>h.id===id);
+const val=(h,k)=>S.log[k]?.[h.id];
+const isDone=(h,k)=>{const v=val(h,k);return h.type==='timer'?(v||0)>=h.target:v===true};
+const isFz=(h,k)=>!!S.frozen[k]?.[h.id];
+const sched=(h,k)=>k>=h.created&&h.days.includes(parse(k).getDay());
+const planOf=k=>(S.plan[k]||[]).slice().sort((a,b)=>(a.time||'99')<(b.time||'99')?-1:1);
+
+function streak(h){let k=today(),n=0;if(!isDone(h,k))k=add(k,-1);for(let i=0;i<800&&k>=h.created;i++,k=add(k,-1)){if(!sched(h,k))continue;if(isDone(h,k))n++;else if(!isFz(h,k))break}return n}
+function best(h){let b=0,n=0;for(let k=h.created,t=today();k<=t;k=add(k,1)){if(!sched(h,k))continue;if(isDone(h,k)){n++;b=Math.max(b,n)}else if(!isFz(h,k)&&k!==t)n=0}return b}
+function fzUsed(month){let n=0;for(const k in S.frozen)if(k.startsWith(month))n+=Object.keys(S.frozen[k]).length;return n}
+function totals(){let xp=0,checks=0,mins=0,goals=0,plans=0;
+  for(const k in S.log)for(const id in S.log[k]){const h=H(id);if(!h)continue;const v=S.log[k][id];if(h.type==='timer'){mins+=v||0;xp+=Math.min(v||0,h.target*2);if(v>=h.target){xp+=10;checks++}}else if(v===true){xp+=10;checks++}}
+  for(const h of S.habits){const b=best(h);xp+=b>=7?30:0;xp+=b>=30?100:0}
+  for(const g of S.goals)if(g.done){goals++;xp+=g.scope==='week'?25:50}
+  for(const k in S.plan)for(const t of S.plan[k])if(t.done){plans++;xp+=5}
+  const spent=S.spent.reduce((a,s)=>a+s.cost,0);return{xp,checks,mins,goals,plans,spent,bal:xp-spent}}
+function level(xp){let L=1,need=100;while(xp>=need){xp-=need;L++;need=Math.round(need*1.25)}return{L,cur:xp,need}}
+
+function persist(){S.updated=Date.now();try{localStorage.setItem('ht-state',JSON.stringify(S))}catch(e){}remote()}
+function save(){persist();render()}
+function toast(t){const e=$('toast');e.textContent=t;e.classList.add('show');clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove('show'),1800)}
+function setSync(on){$('sync').classList.toggle('on',on);$('sync').querySelector('span').textContent=on?'Синхронізовано':'Локально'}
+
+/* habits */
+function setLog(h,k,v){S.log[k]=S.log[k]||{};if(v===undefined||v===0||v===false)delete S.log[k][h.id];else S.log[k][h.id]=v;if(!Object.keys(S.log[k]).length)delete S.log[k]}
+function toggle(id){const h=H(id),was=isDone(h,day),lv=level(totals().xp).L;setLog(h,day,was?undefined:true);if(!was&&isFz(h,day))delete S.frozen[day][h.id];save();if(!was){const n=level(totals().xp).L;toast(n>lv?'Новий рівень: '+n+'!':'+10 XP')}}
+function addMin(id,m){const h=H(id),b=isDone(h,day);setLog(h,day,Math.max(0,(val(h,day)||0)+m));save();if(!b&&isDone(h,day))toast('Ціль виконано! +10 XP')}
+function timer(id){const t=S.timer;const fin=()=>{const m=Math.max(1,Math.round((Date.now()-t.start)/60000));const h=H(t.hid);if(h){S.log[t.day]=S.log[t.day]||{};S.log[t.day][h.id]=(S.log[t.day][h.id]||0)+m}return m};
+  if(t&&t.hid===id){const m=fin();S.timer=null;save();toast('+'+m+' хв');return}if(t)fin();S.timer={hid:id,start:Date.now(),day};save()}
+function freeze(id){const m=day.slice(0,7);if(isFz(H(id),day)){delete S.frozen[day][id];if(!Object.keys(S.frozen[day]).length)delete S.frozen[day];save();return}
+  if(fzUsed(m)>=S.fpm){toast('Заморозки на цей місяць закінчились');return}S.frozen[day]=S.frozen[day]||{};S.frozen[day][id]=true;save();toast('Стрік заморожено')}
+function move(id,n){const i=S.habits.findIndex(h=>h.id===id),j=i+n;if(j<0||j>=S.habits.length)return;[S.habits[i],S.habits[j]]=[S.habits[j],S.habits[i]];save()}
+
+const fmtT=ms=>{const s=Math.floor(ms/1000);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')};
+function habitCard(h){const d=isDone(h,day),fz=isFz(h,day),st=streak(h),v=val(h,day)||0;
+  const sTxt=st?`<span class="streak">${FLAME}${st} ${h.type==='quit'?'чист. дн.':'дн.'}</span>`:'<span class="streak zero">стрік 0</span>';
+  const meta=`<div class="meta">${sTxt}<span class="tag">${esc(SPHERES[h.sphere])}</span>${fz?'<span style="color:var(--ice)">заморожено</span>':''}</div>`;
+  let right,extra='';const fzBtn=d?'':`<button class="chip fzb" data-a="fz" data-id="${h.id}">${SNOW} ${fz?'Зняти заморозку':'Заморозити день'}</button>`;
+  if(h.type==='timer'){const run=S.timer&&S.timer.hid===h.id;
+    right=`<div class="tm"><span class="num" style="font-size:15px;white-space:nowrap" data-run="${run?h.id:''}">${run?fmtT(Date.now()-S.timer.start):v+'/'+h.target}</span><button class="tbtn${run?' run':''}" data-a="timer" data-id="${h.id}">${run?'Стоп':'Старт'}</button></div>`;
+    extra=`<div class="prog"><i style="width:${Math.min(100,v/h.target*100)}%"></i></div><div class="minirow"><button class="chip" data-a="min" data-m="15" data-id="${h.id}">+15 хв</button><button class="chip" data-a="min" data-m="${h.target}" data-id="${h.id}">+${h.target}</button><button class="chip" data-a="setmin" data-id="${h.id}">Вказати хв</button>${fzBtn}</div>`}
+  else{right=`<button class="chk" data-a="tog" data-id="${h.id}" aria-label="${d?'Скасувати':'Відмітити'} ${esc(h.name)}" aria-pressed="${d}">${TICK}</button>`;if(fzBtn)extra=`<div class="minirow">${fzBtn}</div>`}
+  return `<div class="h${d?' done':''}${fz?' fz':''}"><div><div class="nm"><span class="name">${esc(h.name)}</span><button class="ico" data-a="edit" data-id="${h.id}" aria-label="Редагувати ${esc(h.name)}">${PENCIL}</button></div>${meta}</div>${right}${extra}</div>`}
+
+/* planner */
+function planRow(t,k){return `<div class="g${t.done?' done':''}"><button class="gchk" data-a="ptog" data-k="${k}" data-id="${t.id}" aria-label="Відмітити">${TICK}</button><span class="time">${t.time||'—'}</span><span class="gt"><span>${esc(t.title)}</span></span><button class="ico" data-a="pedit" data-k="${k}" data-id="${t.id}" aria-label="Редагувати">${PENCIL}</button></div>`}
+function ptog(k,id){const t=S.plan[k].find(x=>x.id===id);t.done=!t.done;save();if(t.done)toast('+5 XP')}
+function pedit(k,id){const t=S.plan[k].find(x=>x.id===id);ask({title:'Редагувати задачу',text:{label:'Задача',value:t.title},time:t.time||'',
+  moveLabel:'На завтра',save:r=>{if(!r.text)return false;t.title=r.text;t.time=r.time||'';save()},
+  del:()=>{S.plan[k]=S.plan[k].filter(x=>x!==t);if(!S.plan[k].length)delete S.plan[k];save();toast('Видалено')},
+  move:()=>{S.plan[k]=S.plan[k].filter(x=>x!==t);if(!S.plan[k].length)delete S.plan[k];const n=add(k,1);(S.plan[n]=S.plan[n]||[]).push(t);save();toast('Перенесено на завтра')}})}
+function pcarry(){const y=add(day,-1),left=(S.plan[y]||[]).filter(t=>!t.done);if(!left.length)return;S.plan[y]=S.plan[y].filter(t=>t.done);if(!S.plan[y].length)delete S.plan[y];(S.plan[day]=S.plan[day]||[]).push(...left);save();toast('Перенесено: '+left.length)}
+function addForm(kind,ph,withTime){return `<form class="gadd" data-kind="${kind}">${withTime?'<input class="in" type="time" aria-label="Час" style="flex:0 0 120px">':''}<input class="in grow" placeholder="${ph}" maxlength="120" aria-label="${ph}"><button class="addb" type="submit">Додати</button></form>`}
+function renderPlan(){const w=wk(day),t=today();$('planSub').textContent=wLabel(w);
+  $('strip').innerHTML=Array.from({length:7},(_,i)=>{const k=add(w,i),L=S.plan[k]||[],d=parse(k);return `<button data-a="pick" data-k="${k}" aria-current="${k===day}"><span>${DN[d.getDay()]}${k===t?' •':''}</span><b>${d.getDate()}</b><i class="${L.length?(L.every(x=>x.done)?'all':'has'):''}"></i></button>`}).join('');
+  const L=planOf(day),dn=L.filter(x=>x.done).length,left=(S.plan[add(day,-1)]||[]).filter(x=>!x.done).length,dd=parse(day);
+  $('planBox').innerHTML=`<div class="ghead"><h2>${day===t?'Сьогодні':day===add(t,1)?'Завтра':day===add(t,-1)?'Вчора':DFULL[dd.getDay()]}<small>${dd.getDate()} ${MON[dd.getMonth()]}</small></h2>${L.length?`<span class="sub">${dn}/${L.length}</span>`:''}</div>
+  ${L.length?`<div class="gprog"><div class="bar"><i style="width:${dn/L.length*100}%"></i></div></div>`:''}
+  ${L.map(x=>planRow(x,day)).join('')||'<p class="hint" style="margin-top:10px">На цей день задач немає. Додай першу: час можна не вказувати.</p>'}
+  ${addForm('plan','Задача на день',true)}
+  ${left?`<button class="carry" data-a="pcarry">Перенести незроблене з попереднього дня: ${left}</button>`:''}`}
+
+/* goals */
+function goalRow(g){const kids=g.scope==='month'?S.goals.filter(x=>x.parent===g.id):[],par=g.parent?S.goals.find(x=>x.id===g.parent):null;
+  const sub=kids.length?`<small>Кроки: ${kids.filter(x=>x.done).length}/${kids.length}</small>`:par?`<small>Крок до: ${esc(par.title)}</small>`:'';
+  return `<div class="g${g.done?' done':''}"><button class="gchk" data-a="gtog" data-id="${g.id}" aria-label="Відмітити">${TICK}</button><span class="gt"><span>${esc(g.title)}</span>${sub}</span><button class="ico" data-a="gedit" data-id="${g.id}" aria-label="Редагувати">${PENCIL}</button></div>`}
+function monthOpts(m){return S.goals.filter(g=>g.scope==='month'&&g.period===m)}
+function gcard(scope){const per=scope==='week'?gw:gm,cur=scope==='week'?wk(today()):today().slice(0,7),prev=scope==='week'?add(per,-7):mAdd(per,-1);
+  const L=S.goals.filter(g=>g.scope===scope&&g.period===per),dn=L.filter(g=>g.done).length,left=S.goals.filter(g=>g.scope===scope&&g.period===prev&&!g.done).length;
+  const mo=scope==='week'?monthOpts(wMonth(per)):[];
+  return `<div class="card"><div class="ghead"><h2>${scope==='week'?'Тиждень':'Місяць'}<small>${scope==='week'?wLabel(per):mLabel(per)}${per===cur?' · поточний':''}</small></h2>
+  <div class="arrows"><button data-a="gnav" data-s="${scope}" data-n="-1" aria-label="Назад">‹</button><button data-a="gnav" data-s="${scope}" data-n="1" aria-label="Вперед">›</button></div></div>
+  ${L.length?`<div class="gprog"><div class="bar"><i style="width:${dn/L.length*100}%"></i></div><span>${dn}/${L.length}</span></div>`:''}
+  ${L.map(goalRow).join('')||'<p class="hint" style="margin-top:10px">Поки порожньо. Що має бути зроблено за цей '+(scope==='week'?'тиждень':'місяць')+'?</p>'}
+  <form class="gadd" data-kind="${scope}"><input class="in grow" placeholder="${scope==='week'?'Завдання на тиждень':'Ціль на місяць'}" maxlength="120" aria-label="Нове завдання">${mo.length?`<select class="in" aria-label="Крок до місячної цілі"><option value="">Без прив'язки до місячної цілі</option>${mo.map(g=>`<option value="${g.id}">Крок до: ${esc(g.title)}</option>`).join('')}</select>`:''}<button class="addb" type="submit">Додати</button></form>
+  ${left?`<button class="carry" data-a="carry" data-s="${scope}">Перенести незакриті з минулого ${scope==='week'?'тижня':'місяця'}: ${left}</button>`:''}</div>`}
+function gtog(id){const g=S.goals.find(x=>x.id===id);g.done=!g.done;save();if(g.done)toast('+'+(g.scope==='week'?25:50)+' XP')}
+function carry(sc){const per=sc==='week'?gw:gm,prev=sc==='week'?add(per,-7):mAdd(per,-1);let n=0;for(const g of S.goals)if(g.scope===sc&&g.period===prev&&!g.done){g.period=per;n++}save();toast('Перенесено: '+n)}
+function gedit(id){const g=S.goals.find(x=>x.id===id),mo=g.scope==='week'?monthOpts(wMonth(g.period)):null;
+  ask({title:g.scope==='week'?'Завдання на тиждень':'Ціль на місяць',text:{label:'Назва',value:g.title},
+    sel:mo&&mo.length?{label:'Крок до місячної цілі',value:g.parent||'',options:[['','Без прив’язки'],...mo.map(x=>[x.id,x.title])]}:null,
+    moveLabel:g.scope==='week'?'На наступний тиждень':'На наступний місяць',
+    save:r=>{if(!r.text)return false;g.title=r.text;if(mo)g.parent=r.sel||'';save()},
+    del:()=>{S.goals=S.goals.filter(x=>x!==g);for(const x of S.goals)if(x.parent===g.id)x.parent='';save();toast('Видалено')},
+    move:()=>{g.period=g.scope==='week'?add(g.period,7):mAdd(g.period,1);save();toast('Перенесено')}})}
+
+/* rewards */
+function renderRewards(){const{bal}=totals();
+  $('rewardsBox').innerHTML=`<div class="ghead"><h2>Нагороди<small>Витрачай зароблений XP на те, що сам собі пообіцяв. Рівень не падає.</small></h2><span class="num" style="font-size:18px;white-space:nowrap">${bal} XP</span></div>
+  <div style="margin-top:8px">${S.rewards.map(r=>`<div class="reward"><span class="gt"><span>${esc(r.title)}</span></span><span class="cost">${r.cost} XP</span><button class="chip" data-a="rbuy" data-id="${r.id}" ${bal<r.cost?'disabled':''}>Взяти</button><button class="ico" data-a="redit" data-id="${r.id}" aria-label="Редагувати">${PENCIL}</button></div>`).join('')||'<p class="hint">Додай нагороди, напр. «Вечір без роботи», 300 XP.</p>'}</div>
+  <form class="gadd" data-kind="reward"><input class="in grow" placeholder="Нагорода" maxlength="80" aria-label="Нагорода"><input class="in" type="number" min="1" placeholder="XP" aria-label="Ціна в XP" style="flex:0 0 96px"><button class="addb" type="submit">Додати</button></form>
+  ${S.spent.length?`<p class="hint" style="margin-top:12px">Останні: ${S.spent.slice(-4).reverse().map(s=>esc(s.title)+' ('+s.cost+')').join(' · ')}</p>`:''}`}
+function rbuy(id){const r=S.rewards.find(x=>x.id===id);if(totals().bal<r.cost)return;S.spent.push({id:uid(),title:r.title,cost:r.cost,date:today()});save();toast('Заслужив: '+r.title)}
+function redit(id){const r=S.rewards.find(x=>x.id===id);ask({title:'Нагорода',text:{label:'Назва',value:r.title},num:{label:'Ціна в XP',value:r.cost},
+  save:o=>{if(!o.text||!(o.num>0))return false;r.title=o.text;r.cost=o.num;save()},del:()=>{S.rewards=S.rewards.filter(x=>x!==r);save()}})}
+
+/* mood & note */
+function renderMood(){const m=S.days[day]||{};
+  $('moodCard').innerHTML=`<div class="ghead"><h2>Як пройшов день?<small>Оцінка й кілька слів. У «Прогресі» побачиш, як настрій пов'язаний зі звичками.</small></h2></div>
+  <div class="moods">${MOODS.map((t,i)=>`<button data-a="mood" data-n="${i+1}" aria-pressed="${m.mood===i+1}" aria-label="${t}"><b>${i+1}</b><span>${t}</span></button>`).join('')}</div>
+  <textarea class="in" id="note" placeholder="Що вдалося, що заважало, що зробиш інакше завтра" maxlength="2000">${esc(m.note||'')}</textarea>`}
+function setMood(n){const m=S.days[day]=S.days[day]||{};m.mood=m.mood===n?undefined:n;if(!m.mood&&!m.note)delete S.days[day];save()}
+
+/* views */
+function banner(){if(day!==today()||!S.habits.length)return '';const hr=new Date().getHours(),dow=new Date().getDay();
+  const left=S.habits.filter(h=>sched(h,day)&&!isDone(h,day)).length,pl=(S.plan[day]||[]),plLeft=pl.filter(t=>!t.done).length;
+  const wg=S.goals.filter(g=>g.scope==='week'&&g.period===wk(day));
+  if((dow===0&&hr>=17)||(dow===1&&hr<12&&!S.reviews[add(wk(day),-7)]))return `<div class="card banner"><div><b>Час підсумувати тиждень</b><span>Хвилина на огляд, і наступний тиждень буде кращим</span></div><button class="primary sm" data-a="review">Підсумок</button></div>`;
+  if(hr<12)return `<div class="card banner"><div><b>Доброго ранку</b><span>План: ${pl.length?plLeft+' задач':'ще порожній'} · цілі тижня: ${wg.filter(g=>g.done).length}/${wg.length}</span></div><button class="primary sm" data-a="tab" data-v="plan">${pl.length?'Переглянути план':'Скласти план'}</button></div>`;
+  if(hr>=19)return `<div class="card banner"><div><b>Вечір: закрий день</b><span>${left?'Невідмічено звичок: '+left:'Всі звички відмічено'}${plLeft?' · задач лишилось: '+plLeft:''}</span></div><button class="primary sm" data-a="tomood">Оцінити день</button></div>`;
+  return ''}
+function renderToday(){const t=today(),dd=parse(day);$('dayTitle').textContent=day===t?'Сьогодні':day===add(t,-1)?'Вчора':DN[dd.getDay()];
+  $('daySub').textContent=dd.getDate()+' '+MON[dd.getMonth()]+', '+DFULL[dd.getDay()];document.querySelector('.nextd').disabled=day>=t;
+  $('banner').innerHTML=banner();
+  const list=S.habits.filter(h=>sched(h,day));
+  if(!S.habits.length){$('ring').hidden=true;$('list').innerHTML=`<div class="empty"><h2>Почнімо з першої звички</h2><p>Додай 2–3 звички, не більше. Коли вони стануть автоматичними, додаси ще.</p><button class="primary" data-a="new">Додати звичку</button></div>`;$('fzinfo').innerHTML=''}
+  else{const dn=list.filter(h=>isDone(h,day)).length;$('ring').hidden=!list.length;$('ringNum').textContent=dn+'/'+list.length;
+    $('ringT').textContent=dn===list.length&&list.length?'День закрито':'Звички на сьогодні';$('ringP').textContent=list.length?Math.round(dn/list.length*100)+'% виконано':'';
+    const groups=Object.keys(PARTS).map(p=>[p,list.filter(h=>h.part===p)]).filter(g=>g[1].length),multi=groups.length>1;
+    $('list').innerHTML=list.length?groups.map(([p,L])=>(multi?`<div class="grp">${PARTS[p]}</div>`:'')+`<div class="list">${L.map(habitCard).join('')}</div>`).join(''):'<div class="empty">На цей день звичок не заплановано.</div>';
+    $('fzinfo').innerHTML=`${SNOW} Заморозок у цьому місяці: ${Math.max(0,S.fpm-fzUsed(day.slice(0,7)))} з ${S.fpm}`}
+  const L=planOf(day);
+  $('todayPlan').innerHTML=`<div class="ghead"><h2>План на день<small>${L.length?L.filter(x=>x.done).length+' з '+L.length+' зроблено':'Задачі з часом і без'}</small></h2><button class="chip" data-a="tab" data-v="plan">Відкрити</button></div>${L.map(x=>planRow(x,day)).join('')}${addForm('plan','Швидко додати задачу',false)}`;
+  renderMood();
+  const wg=S.goals.filter(g=>g.scope==='week'&&g.period===wk(t)),mg=S.goals.filter(g=>g.scope==='month'&&g.period===t.slice(0,7));
+  $('glink').innerHTML=wg.length||mg.length?`<b>Цілі</b><span>тиждень ${wg.filter(g=>g.done).length}/${wg.length} · місяць ${mg.filter(g=>g.done).length}/${mg.length} ›</span>`:`<b>Постав цілі на тиждень і місяць</b><span>›</span>`}
+
+function weekSum(w){const t=today(),end=add(w,6)<t?add(w,6):t;let s=0,d=0;const per=S.habits.map(h=>{let hs=0,hd=0;for(let k=w;k<=end;k=add(k,1))if(sched(h,k)){hs++;if(isDone(h,k))hd++}s+=hs;d+=hd;return{h,p:hs?hd/hs:null}}).filter(x=>x.p!==null).sort((a,b)=>b.p-a.p);
+  const G=S.goals.filter(g=>g.scope==='week'&&g.period===w);let pt=0,pd=0,ms=[];for(let k=w;k<=add(w,6);k=add(k,1)){for(const x of S.plan[k]||[]){pt++;if(x.done)pd++}if(S.days[k]?.mood)ms.push(S.days[k].mood)}
+  return{pct:s?Math.round(d/s*100):null,best:per[0],worst:per.length>1?per[per.length-1]:null,gd:G.filter(g=>g.done).length,gt:G.length,pd,pt,mood:ms.length?(ms.reduce((a,b)=>a+b,0)/ms.length).toFixed(1):null}}
+function renderReview(){const r=weekSum(rw),cur=wk(today());
+  $('reviewBox').innerHTML=`<div class="ghead"><h2>Підсумок тижня<small>${wLabel(rw)}${rw===cur?' · поточний':''}</small></h2><div class="arrows"><button data-a="rnav" data-n="-7" aria-label="Попередній тиждень">‹</button><button data-a="rnav" data-n="7" ${rw>=cur?'disabled':''} aria-label="Наступний тиждень">›</button></div></div>
+  <div class="rows" style="padding:0;margin-top:8px;background:none">
+   <div class="row"><span>Виконання звичок</span><span class="r">${r.pct===null?'—':r.pct+'%'}</span></div>
+   ${r.best?`<div class="row"><span>Найкраща</span><span class="r">${esc(r.best.h.name)} · ${Math.round(r.best.p*100)}%</span></div>`:''}
+   ${r.worst&&r.worst.p<r.best.p?`<div class="row"><span>Найслабша</span><span class="r">${esc(r.worst.h.name)} · ${Math.round(r.worst.p*100)}%</span></div>`:''}
+   <div class="row"><span>Цілі тижня</span><span class="r">${r.gd}/${r.gt}</span></div>
+   <div class="row"><span>Задачі з плану</span><span class="r">${r.pd}/${r.pt}</span></div>
+   <div class="row"><span>Середній настрій</span><span class="r">${r.mood??'—'}</span></div></div>
+  <label class="hint" for="rnote" style="display:block;margin:12px 0 6px">Що змінити наступного тижня?</label><textarea class="in" id="rnote" maxlength="2000" placeholder="Напр. тренування перенести на ранок, на монтаж ставити таймер">${esc(S.reviews[rw]||'')}</textarea>`}
+function renderStats(){const t=today(),{checks,mins,goals}=totals();const bestAll=Math.max(0,...S.habits.map(best)),curAll=Math.max(0,...S.habits.map(streak));renderReview();
+  let sch=0,dn=0,ms=[];for(let i=0;i<7;i++){const k=add(t,-i);for(const h of S.habits)if(sched(h,k)){sch++;if(isDone(h,k))dn++}if(S.days[k]?.mood)ms.push(S.days[k].mood)}
+  $('kpis').innerHTML=[[sch?Math.round(dn/sch*100)+'%':'—','звички за 7 днів'],[curAll,'найдовший поточний стрік'],[bestAll,'рекорд стріку'],[(mins/60).toFixed(1)+' год','у таймерах загалом'],[ms.length?(ms.reduce((a,b)=>a+b,0)/ms.length).toFixed(1):'—','настрій за 7 днів'],[goals,'цілей закрито']].map(([a,b])=>`<div class="kpi"><div class="num">${a}</div><p>${b}</p></div>`).join('');
+  const hi=[],lo=[];for(const k in S.days){const m=S.days[k].mood;if(!m)continue;const L=S.habits.filter(h=>sched(h,k));if(!L.length)continue;(L.filter(h=>isDone(h,k)).length/L.length>=.8?hi:lo).push(m)}
+  const avg=a=>(a.reduce((x,y)=>x+y,0)/a.length).toFixed(1);
+  $('moodInsight').innerHTML=hi.length>=3&&lo.length>=3?`Настрій у дні, коли виконано 80%+ звичок: <b>${avg(hi)}</b> <span>проти ${avg(lo)} в інші дні</span>`:'<span>Оцінюй день хоча б тиждень, і тут з’явиться зв’язок між настроєм і звичками.</span>';
+  const start=add(t,-(17*7+((parse(t).getDay()+6)%7)));let cells='';
+  for(let k=start;k<=t;k=add(k,1)){let s=0,d=0,f=0;for(const h of S.habits)if(sched(h,k)){s++;if(isDone(h,k))d++;else if(isFz(h,k))f++}
+    const r=s?d/s:0,c=!s?'var(--line)':f&&!d?'var(--ice)':r===0?'var(--line)':r<.5?'#5a2a1c':r<1?'#a8442a':'var(--acc)';cells+=`<i style="background:${c}" title="${k}: ${d}/${s}"></i>`}
+  $('heat').innerHTML=cells;
+  $('perHabit').innerHTML=S.habits.length?S.habits.map(h=>{let s=0,d=0;for(let i=0;i<30;i++){const k=add(t,-i);if(sched(h,k)){s++;if(isDone(h,k))d++}}const p=s?Math.round(d/s*100):0;
+    return `<div class="row"><span>${esc(h.name)}</span><span class="r">${p}% · стрік ${streak(h)} · рекорд ${best(h)}</span><div class="bar"><i style="width:${p}%"></i></div></div>`}).join(''):'<p class="hint" style="padding:10px 0">Тут з’явиться прогрес кожної звички.</p>';
+  const A=[['Перший крок','Перше виконання',checks>=1],['Тиждень вогню','Стрік 7 днів',bestAll>=7],['Два тижні','Стрік 14 днів',bestAll>=14],['Звичка сформована','Стрік 30 днів',bestAll>=30],['Сотня','100 виконань',checks>=100],['10 годин фокусу','600 хв у таймерах',mins>=600],['50 годин фокусу','3000 хв у таймерах',mins>=3000],['Ідеальний тиждень','7 днів поспіль 100%',perfectWeek()],['Ціль досягнута','5 закритих цілей',goals>=5],['Рефлексія','4 підсумки тижня',Object.values(S.reviews).filter(Boolean).length>=4]];
+  $('badges').innerHTML=A.map(([a,b,g])=>`<div class="badge${g?' got':''}"><b>${a}</b><small>${b}</small></div>`).join('')}
+function perfectWeek(){let run=0;const t=today();for(let i=0;i<400;i++){const k=add(t,-i);const l=S.habits.filter(h=>sched(h,k));if(!l.length)continue;if(l.every(h=>isDone(h,k))){if(++run>=7)return true}else if(i>0)run=0}return false}
+function renderManage(){$('fzCfg').textContent=S.fpm;
+  $('mlist').innerHTML=S.habits.length?S.habits.map((h,i)=>`<div class="mrow"><div class="updown"><button data-a="up" data-id="${h.id}" ${i?'':'disabled'} aria-label="Вище">↑</button><button data-a="down" data-id="${h.id}" ${i<S.habits.length-1?'':'disabled'} aria-label="Нижче">↓</button></div><button class="h" data-a="edit" data-id="${h.id}"><div><div class="name">${esc(h.name)}</div><div class="meta"><span class="tag">${TYPES[h.type]}${h.type==='timer'?' · '+h.target+' хв':''}</span><span class="tag">${PARTS[h.part]}</span><span>${h.days.length===7?'щодня':DOW.filter(d=>h.days.includes(d)).map(d=>DN[d]).join(' ')}</span></div></div><span style="color:var(--mute)">${PENCIL}</span></button></div>`).join(''):'<div class="empty">Ще немає звичок.</div>'}
+
+function render(){const{xp,bal}=totals(),lv=level(xp);$('lvl').textContent=lv.L;$('title').textContent=LEVELS[Math.min(LEVELS.length-1,lv.L-1)];$('xptxt').textContent=`· ${lv.cur}/${lv.need} XP`;$('xpbar').style.width=(lv.cur/lv.need*100)+'%';
+  if(view==='today')renderToday();else if(view==='plan')renderPlan();else if(view==='goals'){$('goalsBox').innerHTML=gcard('week')+gcard('month');renderRewards()}else if(view==='stats')renderStats();else renderManage()}
+function setView(v){view=v;document.querySelectorAll('.tabs button').forEach(x=>x.setAttribute('aria-selected',x.dataset.v===v));['today','plan','goals','stats','manage'].forEach(x=>$('v-'+x).hidden=x!==v);$('fab').hidden=!(v==='today'||v==='manage');render();scrollTo(0,0)}
+
+/* habit form */
+let F={};
+function chips(el,opts,cur,multi){el.innerHTML=opts.map(([v,l])=>`<button type="button" class="chip" data-v="${v}" aria-pressed="${multi?cur.includes(+v):cur===v}">${l}</button>`).join('')}
+function drawForm(){chips($('fSphere'),Object.entries(SPHERES),F.sphere);chips($('fType'),Object.entries(TYPES),F.type);chips($('fPart'),Object.entries(PARTS),F.part);chips($('fDays'),DOW.map(d=>[d,DN[d]]),F.days,true);$('targetBox').hidden=F.type!=='timer';$('typeHint').textContent=THINTS[F.type]}
+function openForm(id){editId=id||null;const h=id?H(id):null;F=h?{sphere:h.sphere,type:h.type,part:h.part,days:[...h.days]}:{sphere:'body',type:'check',part:'any',days:[0,1,2,3,4,5,6]};
+  $('fTitle').textContent=h?'Редагувати звичку':'Нова звичка';$('fName').value=h?h.name:'';$('fTarget').value=h?.target||30;$('fDel').hidden=!h;$('fDel').textContent='Видалити';$('presetBox').hidden=!!h;
+  $('presets').innerHTML=PRESETS.map((p,i)=>`<button type="button" class="chip" data-p="${i}">${p[0]}</button>`).join('');drawForm();$('dlg').showModal()}
+$('fSphere').onclick=e=>{const b=e.target.closest('[data-v]');if(b){F.sphere=b.dataset.v;drawForm()}};
+$('fType').onclick=e=>{const b=e.target.closest('[data-v]');if(b){F.type=b.dataset.v;if(F.type==='quit')F.sphere='quit';drawForm()}};
+$('fPart').onclick=e=>{const b=e.target.closest('[data-v]');if(b){F.part=b.dataset.v;drawForm()}};
+$('fDays').onclick=e=>{const b=e.target.closest('[data-v]');if(!b)return;const d=+b.dataset.v;F.days=F.days.includes(d)?F.days.filter(x=>x!==d):[...F.days,d];drawForm()};
+$('presets').onclick=e=>{const b=e.target.closest('[data-p]');if(!b)return;const p=PRESETS[b.dataset.p];$('fName').value=p[0];F.sphere=p[1];F.type=p[2];F.part=p[4];if(p[3])$('fTarget').value=p[3];drawForm()};
+$('fCancel').onclick=()=>$('dlg').close();
+$('fDel').onclick=()=>{if($('fDel').textContent!=='Точно видалити?'){$('fDel').textContent='Точно видалити?';return}S.habits=S.habits.filter(h=>h.id!==editId);if(S.timer?.hid===editId)S.timer=null;$('dlg').close();save();toast('Звичку видалено')};
+function saveHabit(){try{const name=$('fName').value.trim();if(!name){toast('Напиши назву');$('fName').focus();return}if(!F.days.length){toast('Обери хоча б один день');return}
+  const data={name,sphere:F.sphere,type:F.type,part:F.part,target:Math.min(600,Math.max(1,Math.round(+$('fTarget').value)||30)),days:F.days.slice()};
+  if(editId){const i=S.habits.findIndex(h=>h.id===editId);S.habits[i]={...S.habits[i],...data}}else S.habits.push({id:uid(),created:day<today()?day:today(),...data});
+  $('dlg').close();save();toast(editId?'Збережено':'Звичку додано')}catch(e){toast('Не вдалося зберегти');console.error(e)}}
+$('fSave').onclick=saveHabit;$('form').onsubmit=e=>{e.preventDefault();saveHabit()};
+
+/* generic edit dialog */
+let P={};
+function ask(o){P=o;$('pTitle').textContent=o.title;
+  $('pTextBox').hidden=!o.text;if(o.text){$('pLabel').textContent=o.text.label;$('pIn').value=o.text.value}
+  $('pTimeBox').hidden=o.time===undefined;$('pTime').value=o.time||'';
+  $('pNumBox').hidden=!o.num;if(o.num){$('pNumLabel').textContent=o.num.label;$('pNum').value=o.num.value}
+  $('pSelBox').hidden=!o.sel;if(o.sel){$('pSelLabel').textContent=o.sel.label;$('pSel').innerHTML=o.sel.options.map(([v,l])=>`<option value="${v}">${esc(l)}</option>`).join('');$('pSel').value=o.sel.value}
+  $('pDel').hidden=!o.del;$('pDel').textContent='Видалити';$('pMove').hidden=!o.move;$('pMove').textContent=o.moveLabel||'Перенести';$('dlg2').showModal();(o.text?$('pIn'):$('pNum')).select()}
+function pSave(){try{const r={text:$('pIn').value.trim(),time:$('pTime').value,num:Math.max(0,Math.round(+$('pNum').value||0)),sel:$('pSel').value};if(P.save(r)===false){toast('Заповни поле');return}$('dlg2').close()}catch(e){toast('Не вдалося зберегти');console.error(e)}}
+$('pSave').onclick=pSave;$('pform').onsubmit=e=>{e.preventDefault();pSave()};
+$('pCancel').onclick=()=>$('dlg2').close();
+$('pDel').onclick=()=>{if($('pDel').textContent!=='Точно?'){$('pDel').textContent='Точно?';return}P.del();$('dlg2').close()};
+$('pMove').onclick=()=>{P.move();$('dlg2').close()};
+function setmin(id){const h=H(id);ask({title:h.name,num:{label:'Хвилин за цей день (ціль '+h.target+')',value:val(h,day)||0},save:r=>{const b=isDone(h,day);setLog(h,day,r.num);save();if(!b&&isDone(h,day))toast('Ціль виконано! +10 XP')}})}
+
+/* inline add forms */
+document.body.addEventListener('submit',e=>{const f=e.target.closest('.gadd');if(!f)return;e.preventDefault();const kind=f.dataset.kind,txt=f.querySelector('.grow').value.trim();if(!txt)return;
+  if(kind==='plan'){const tm=f.querySelector('input[type=time]')?.value||'';(S.plan[day]=S.plan[day]||[]).push({id:uid(),title:txt,time:tm,done:false})}
+  else if(kind==='reward'){const c=Math.round(+f.querySelector('input[type=number]').value);if(!(c>0)){toast('Вкажи ціну в XP');return}S.rewards.push({id:uid(),title:txt,cost:c})}
+  else{const sel=f.querySelector('select');S.goals.push({id:uid(),scope:kind,period:kind==='week'?gw:gm,title:txt,done:false,parent:sel?sel.value:''})}
+  save();setTimeout(()=>{const n=document.querySelector(`.gadd[data-kind="${kind}"] .grow`);n&&n.focus()},0)});
+document.body.addEventListener('input',e=>{if(e.target.id==='note'){const m=S.days[day]=S.days[day]||{};m.note=e.target.value;persist()}else if(e.target.id==='rnote'){S.reviews[rw]=e.target.value;persist()}});
+
+/* clicks */
+document.body.addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(!b||b.disabled)return;const id=b.dataset.id,a=b.dataset.a;
+  ({tog:()=>toggle(id),timer:()=>timer(id),min:()=>addMin(id,+b.dataset.m),setmin:()=>setmin(id),fz:()=>freeze(id),edit:()=>openForm(id),new:()=>openForm(),
+    up:()=>move(id,-1),down:()=>move(id,1),fzcfg:()=>{S.fpm=S.fpm>=5?1:S.fpm+1;save()},tab:()=>setView(b.dataset.v),
+    dnav:()=>{const n=add(day,+b.dataset.n);if(n<=today()){day=n;render()}},pnav:()=>{day=add(day,+b.dataset.n);render()},pick:()=>{day=b.dataset.k;render()},
+    ptog:()=>ptog(b.dataset.k,id),pedit:()=>pedit(b.dataset.k,id),pcarry,gtog:()=>gtog(id),gedit:()=>gedit(id),carry:()=>carry(b.dataset.s),
+    gnav:()=>{const n=+b.dataset.n;if(b.dataset.s==='week')gw=add(gw,7*n);else gm=mAdd(gm,n);render()},
+    logout:()=>logout(),rbuy:()=>rbuy(id),redit:()=>redit(id),mood:()=>setMood(+b.dataset.n),tomood:()=>$('moodCard').scrollIntoView({behavior:'smooth'}),
+    review:()=>{rw=new Date().getDay()===1?add(wk(today()),-7):wk(today());setView('stats')},rnav:()=>{const n=add(rw,+b.dataset.n);if(n<=wk(today())){rw=n;render()}}})[a]?.()});
+
+setInterval(()=>{const el=document.querySelector('[data-run]:not([data-run=""])');if(el&&S.timer)el.textContent=fmtT(Date.now()-S.timer.start)},1000);
+let lastDay=today();setInterval(()=>{if(today()!==lastDay){if(day===lastDay)day=today();lastDay=today();render()}},60000);
+render();
+/* ---- Supabase sync ---- */
+const SB=supabase.createClient('https://sxyvmzxztmiyaspkhsoz.supabase.co','sb_publishable_bDHFlu3QpXKH7XsX1XDxpA_N4AUW7o3',{auth:{persistSession:true}});
+let uidv=null,chan=null,pushing=0;
+async function pull(){const{data,error}=await SB.from('strik_state').select('data').eq('user_id',uidv).maybeSingle();if(error){setSync(false);return}
+  const d=data&&data.data&&data.data.habits?norm(data.data):null;
+  if(d&&(d.updated||0)>=(S.updated||0)){S=d;try{localStorage.setItem('ht-state',JSON.stringify(S))}catch(e){}render()}else if(!d||(S.updated||0)>(d.updated||0))await push();setSync(true)}
+async function push(){if(!uidv)return;pushing++;const{error}=await SB.from('strik_state').upsert({user_id:uidv,data:JSON.parse(JSON.stringify(S)),updated_at:new Date().toISOString()});pushing--;setSync(!error)}
+remote=()=>{clearTimeout(saveT);saveT=setTimeout(push,500)};
+async function start(session){uidv=session.user.id;$('auth').hidden=true;$('whoami').textContent=session.user.email;
+  try{const last=localStorage.getItem('ht-user');if(last&&last!==uidv){S=BLANK();render()}localStorage.setItem('ht-user',uidv)}catch(e){}
+  await pull();
+  if(chan)SB.removeChannel(chan);chan=SB.channel('strik-'+uidv).on('postgres_changes',{event:'*',schema:'public',table:'strik_state',filter:'user_id=eq.'+uidv},p=>{const d=p.new&&p.new.data;if(d&&d.habits&&(d.updated||0)>(S.updated||0)){S=norm(d);try{localStorage.setItem('ht-state',JSON.stringify(S))}catch(e){}render()}}).subscribe()}
+function showAuth(){uidv=null;$('auth').hidden=false;setSync(false)}
+$('authForm').onsubmit=async e=>{e.preventDefault();const email=$('aEmail').value.trim(),password=$('aPass').value;$('aErr').textContent='';
+  if(!email||!password){$('aErr').textContent='Введи email і пароль';return}$('aBtn').disabled=true;$('aBtn').textContent='Входжу…';
+  const{data,error}=await SB.auth.signInWithPassword({email,password});$('aBtn').disabled=false;$('aBtn').textContent='Увійти';
+  if(error){$('aErr').textContent=/invalid/i.test(error.message)?'Невірний email або пароль':'Не вдалося увійти. Спробуй ще раз.';return}$('aPass').value='';start(data.session)};
+logout=async()=>{await SB.auth.signOut();if(chan)SB.removeChannel(chan);chan=null;S=BLANK();try{localStorage.removeItem('ht-state');localStorage.removeItem('ht-user')}catch(e){}render();showAuth()};
+SB.auth.getSession().then(({data})=>data.session?start(data.session):showAuth());
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&uidv&&!pushing)pull()});
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
+</script>
+</body>
+</html>
