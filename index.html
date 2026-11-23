@@ -48,7 +48,7 @@ button:disabled{opacity:.35;cursor:default}
   background:radial-gradient(120px 80px at var(--x,30%) var(--y,0%),rgba(255,255,255,.18),transparent 70%);mix-blend-mode:screen;transition:background .2s}
 .press{transition:transform .5s var(--spring)}.press:active{transform:scale(.95)}
 
-.wrap{max-width:640px;margin:0 auto;padding:calc(14px + env(safe-area-inset-top)) 16px calc(130px + env(safe-area-inset-bottom))}
+.wrap{max-width:640px;margin:0 auto;min-height:calc(100vh + 1px);min-height:calc(100lvh + 1px);padding:calc(14px + env(safe-area-inset-top)) 16px calc(130px + env(safe-area-inset-bottom))}
 .top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:16px}
 .brand{display:flex;align-items:center;gap:9px;font-family:Unbounded,sans-serif;font-weight:700;font-size:20px}.brand svg{width:28px;height:28px}
 .topr{display:flex;align-items:center;gap:8px}
