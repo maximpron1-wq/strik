@@ -29,7 +29,7 @@ h2{font-size:17px;margin:0;font-weight:600}
 header{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px)}
 .top{display:flex;flex-wrap:wrap;align-items:center;gap:12px 20px;padding-block:max(16px,env(safe-area-inset-top)) 12px}
 .brand{display:flex;align-items:center;gap:12px;margin-right:auto}
-.logo{width:40px;height:40px;border-radius:12px;background:var(--ink);display:grid;place-items:center}
+.logo{width:40px;height:40px;border-radius:10px;overflow:hidden;background:var(--ink);display:grid;place-items:center}
 #status{font-size:13px;color:var(--mut)}
 nav{display:flex;gap:4px;background:var(--card);padding:4px;border-radius:14px;overflow-x:auto;border:1px solid var(--rule)}
 nav a{flex:none;padding:9px 16px;border-radius:10px;color:var(--mut);text-decoration:none;font-weight:500;font-size:15px}
@@ -205,7 +205,7 @@ body.ios #authForm{background:linear-gradient(145deg,light-dark(rgb(255 255 255/
 <body data-view="overview" class="ios">
 <div class="bgfx"></div>
 <header><div class="wrap top">
-  <div class="brand"><div class="logo"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--bg)" stroke-width="2.2" stroke-linecap="round"><path d="M4 17l5-5 4 3 7-8"/><path d="M15 7h5v5"/></svg></div><div><h1>Мої гроші</h1><div id="status">Завантаження…</div></div></div>
+  <div class="brand"><div class="logo"><svg width="36" height="36" viewBox="0 0 100 100" aria-hidden="true"><rect x="30" y="24" width="40" height="22" rx="5" fill="var(--acc,#007aff)" transform="rotate(-8 50 35)"/><rect x="21" y="34" width="58" height="40" rx="10" fill="var(--bg)"/><rect x="56" y="47" width="23" height="14" rx="7" fill="#8e8e93"/><circle cx="64" cy="54" r="2.8" fill="var(--bg)"/></svg></div><div><h1>Мої гроші</h1><div id="status">Завантаження…</div></div></div>
   <div class="month"><button id="prevM" aria-label="Попередній місяць">‹</button><span id="mName"></span><button id="nextM" aria-label="Наступний місяць">›</button></div>
   <nav><span class="pill"></span><a href="#overview" data-v="overview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span>Дашборд</span></a><a href="#ops" data-v="ops"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg><span>Операції</span></a><a href="#loans" data-v="loans"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="5" width="20" height="14" rx="3"/><path d="M2 10h20M6 15h4"/></svg><span>Кредити</span></a><a href="#settings" data-v="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1L7 17M17 7l2.1-2.1"/></svg><span>Налаштування</span></a></nav>
 </div></header>
@@ -276,7 +276,7 @@ body.ios #authForm{background:linear-gradient(145deg,light-dark(rgb(255 255 255/
   <button class="pri" id="fSave" style="min-height:52px">Додати</button>
 </form></div>
 <div id="auth" hidden><form id="authForm" novalidate>
-  <div class="logo" style="width:56px;height:56px;border-radius:16px"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="var(--bg)" stroke-width="2.2" stroke-linecap="round"><path d="M4 17l5-5 4 3 7-8"/><path d="M15 7h5v5"/></svg></div>
+  <div class="logo" style="width:56px;height:56px;border-radius:16px"><svg width="44" height="44" viewBox="0 0 100 100" aria-hidden="true"><rect x="30" y="24" width="40" height="22" rx="5" fill="var(--acc,#007aff)" transform="rotate(-8 50 35)"/><rect x="21" y="34" width="58" height="40" rx="10" fill="var(--bg)"/><rect x="56" y="47" width="23" height="14" rx="7" fill="#8e8e93"/><circle cx="64" cy="54" r="2.8" fill="var(--bg)"/></svg></div>
   <div><h1>Мої гроші</h1><p class="sub" style="margin:6px 0 0">Увійди тим самим акаунтом, що й у Стріку та My Orders.</p></div>
   <div><label for="aEmail">Email</label><input id="aEmail" type="email" autocomplete="username" inputmode="email"></div>
   <div><label for="aPass">Пароль</label><input id="aPass" type="password" autocomplete="current-password"></div>
