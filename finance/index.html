@@ -95,7 +95,7 @@ button.row:active{transform:none;opacity:.6}
 .legend{display:flex;gap:14px;font-size:13px;color:var(--mut)}.legend i{display:inline-block;width:12px;height:4px;border-radius:2px;margin-right:6px;vertical-align:middle}
 /* tab bar */
 nav{position:fixed;z-index:10;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom));border-radius:999px;padding:6px;display:flex;gap:2px;touch-action:none;user-select:none;-webkit-user-select:none}
-nav a{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:7px 18px;border-radius:999px;font-size:11px;font-weight:600;color:var(--mut);text-decoration:none;min-width:76px}
+nav a{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:7px 14px;border-radius:999px;font-size:11px;font-weight:600;color:var(--mut);text-decoration:none;min-width:72px}
 nav a svg{width:24px;height:24px;transition:transform .8s var(--E)}
 nav a.on,nav a.hov{color:var(--acc)}
 .pill{position:absolute;top:6px;bottom:6px;left:0;width:0;border-radius:999px;z-index:0;pointer-events:none;will-change:transform,width;
@@ -157,6 +157,28 @@ textarea{min-height:110px;font:13px/1.4 ui-monospace,monospace}
 #aErr{color:var(--bad);font-size:14px;min-height:1.2em;margin:0}
 .logo{width:56px;height:56px;border-radius:16px;overflow:hidden;background:var(--ink)}
 @media(hover:hover){.card.glass{transition:transform 1.1s var(--E),box-shadow .7s}.card.glass:hover{transform:translateY(-2px)}}
+
+/* day log */
+.moods{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.mood{display:flex;flex-direction:column;align-items:center;gap:4px;min-height:0;padding:8px 2px;border-radius:16px;background:none;font-size:11px;font-weight:500;color:var(--mut);white-space:normal;line-height:1.15}
+.mood svg{width:34px;height:34px}
+.mood.on{background:var(--soft);color:var(--ink)}.mood.on svg{color:var(--acc)}
+.stepper{display:flex;align-items:center;gap:10px}
+.stepper button{width:44px;height:44px;padding:0;border-radius:50%;font-size:22px;font-weight:500}
+.stepper output{min-width:2.2ch;text-align:center;font-size:30px;font-weight:700;letter-spacing:-.03em}
+.dayrow{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:6px 0 12px}
+.tags{display:flex;flex-wrap:wrap;gap:8px}
+.cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+.cal .wd{font-size:11px;color:var(--mut);text-align:center}
+.cal button{aspect-ratio:1;min-height:0;padding:0;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;font-size:13px;font-weight:600;line-height:1.1}
+.cal button small{font-size:10px;font-weight:500;opacity:.75}
+.cal button.today{box-shadow:inset 0 0 0 2px var(--ink)}
+.cal button.future{opacity:.35}
+.scale{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--mut);margin-top:10px}.scale i{width:16px;height:10px;border-radius:3px;display:inline-block}
+.insight{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--rule)}.insight:last-child{border-bottom:0}
+.insight .ic{width:36px;height:36px}
+.insight b{display:block;font-weight:600}
+@media(max-width:520px){nav a{font-size:10px}}
 </style>
 </head>
 <body>
@@ -184,6 +206,9 @@ textarea{min-height:110px;font:13px/1.4 ui-monospace,monospace}
     <button class="inkb" data-add="exp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14"/></svg>Витрата</button>
     <button class="glass" data-add="inc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Дохід</button>
   </div>
+  <div class="card glass" id="todayCard"><div class="ch"><h2>Як твій день?</h2><button class="link" id="openDayToday">Детальніше</button></div>
+    <div class="dayrow"><span><b style="display:block">ТЗ сьогодні</b><span class="sub" id="tzHint">скільки зробив</span></span><div class="stepper"><button data-tz="-1" aria-label="Менше ТЗ">−</button><output id="tzToday">0</output><button data-tz="1" aria-label="Більше ТЗ">+</button></div></div>
+    <div class="moods" id="moodToday" role="radiogroup" aria-label="Настрій сьогодні"></div></div>
   <div id="onboard"></div>
   <div class="card glass" id="dueCard"><div class="ch"><h2>Платежі цього місяця</h2></div><div id="dueList"></div></div>
   <div class="card glass"><div class="ch"><h2>На що йдуть гроші</h2><span class="sub" id="catSum"></span></div><div id="homeCats"></div></div>
@@ -201,6 +226,14 @@ textarea{min-height:110px;font:13px/1.4 ui-monospace,monospace}
   <button class="glass big-btn" id="addLoan" style="margin-bottom:14px">Додати кредит або розстрочку</button>
 </section>
 <!-- STATS -->
+<section class="view" id="v-day">
+  <div class="mswitch glass"><button class="round" id="dPrev" aria-label="Попередній місяць" style="background:none">‹</button><b id="dMonth"></b><button class="round" id="dNext" aria-label="Наступний місяць" style="background:none">›</button></div>
+  <div class="kpis"><div class="kpi glass"><span class="sub">ТЗ за місяць</span><b id="kTz"></b><span class="sub" id="kTzD"></span></div><div class="kpi glass"><span class="sub">Середній настрій</span><b id="kMood"></b><span class="sub" id="kMoodD"></span></div><div class="kpi glass"><span class="sub">Заробіток за 1 ТЗ</span><b id="kPer"></b><span class="sub" id="kPerD"></span></div></div>
+  <div class="card glass"><div class="ch"><h2>Календар</h2><span class="sub">колір — настрій, цифра — ТЗ</span></div><div class="cal" id="cal"></div>
+    <div class="scale" aria-hidden="true"><span>гірше</span><i data-m="1"></i><i data-m="2"></i><i data-m="3"></i><i data-m="4"></i><i data-m="5"></i><span>краще</span></div></div>
+  <div class="card glass"><div class="ch"><h2>ТЗ по днях</h2><span class="sub">відтінок — настрій</span></div><div class="fig" id="fTz"><svg></svg></div></div>
+  <div class="card glass"><div class="ch"><h2>Що видно з даних</h2></div><div id="insights"></div></div>
+</section>
 <section class="view" id="v-stats">
   <div class="mswitch glass"><button class="round" id="prevM" aria-label="Попередній місяць" style="background:none">‹</button><b id="mName"></b><button class="round" id="nextM" aria-label="Наступний місяць" style="background:none">›</button></div>
   <div class="kpis"><div class="kpi glass"><span class="sub">Доходи</span><b id="sInc"></b><span class="sub" id="dInc"></span></div><div class="kpi glass"><span class="sub">Витрати</span><b id="sExp"></b><span class="sub" id="dExp"></span></div><div class="kpi glass"><span class="sub">Залишок</span><b id="sNet"></b><span class="sub" id="dNet"></span></div></div>
@@ -214,6 +247,7 @@ textarea{min-height:110px;font:13px/1.4 ui-monospace,monospace}
 <nav class="glass" aria-label="Розділи"><span class="pill"></span>
   <a href="#home" data-v="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7M5 10v10h14V10"/></svg><span>Головна</span></a>
   <a href="#loans" data-v="loans"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="5" width="20" height="14" rx="3"/><path d="M2 10h20M6 15h4"/></svg><span>Кредити</span></a>
+  <a href="#day" data-v="day"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M3 9h18M8 2v4M16 2v4M8.5 15l2.2 2 4.8-4.5"/></svg><span>День</span></a>
   <a href="#stats" data-v="stats"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span>Аналітика</span></a>
 </nav>
 <button class="fab" id="fab" aria-label="Додати операцію"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
@@ -265,6 +299,18 @@ textarea{min-height:110px;font:13px/1.4 ui-monospace,monospace}
   <div id="histList"></div>
 </div></div>
 
+<!-- SHEET: day -->
+<div class="sheet" id="shDay"><div class="panel" role="dialog" aria-label="День">
+  <div class="grab"></div>
+  <div class="sh"><button class="round" id="dayPrev" aria-label="Попередній день">‹</button><h2 id="dayTitle" style="text-align:center;flex:1">Сьогодні</h2><button class="round" id="dayNext" aria-label="Наступний день">›</button></div>
+  <div class="dayrow"><span><b style="display:block">Кількість ТЗ</b><span class="sub">зроблених за день</span></span><div class="stepper"><button data-dtz="-1" aria-label="Менше">−</button><output id="dayTz">0</output><button data-dtz="1" aria-label="Більше">+</button></div></div>
+  <p class="sub" style="margin:4px 4px 8px">Настрій</p><div class="moods" id="dayMood" role="radiogroup" aria-label="Настрій"></div>
+  <p class="sub" style="margin:14px 4px 8px">Що вплинуло</p><div class="tags" id="dayTags"></div>
+  <textarea id="dayNote" placeholder="Нотатка про день (необовʼязково)" style="margin-top:12px;min-height:80px;font-family:inherit;font-size:16px;line-height:1.4"></textarea>
+  <button class="pri big-btn" id="daySave" style="margin-top:12px">Готово</button>
+  <button class="link" id="dayClear" style="width:100%;margin-top:6px;color:var(--bad)">Очистити запис за цей день</button>
+</div></div>
+
 <!-- SHEET: settings -->
 <div class="sheet" id="shSet"><div class="panel" role="dialog" aria-label="Налаштування">
   <div class="grab"></div>
@@ -313,7 +359,7 @@ const fmtD=d=>+d.slice(8)+' '+MG[+d.slice(5,7)-1];
 const num=v=>{const n=parseFloat(String(v).replace(/\s/g,'').replace(',','.'));return isFinite(n)?n:NaN};
 const r2=n=>Math.round(n*100)/100;
 const NF=new Intl.NumberFormat('uk-UA',{maximumFractionDigits:2}),NF0=new Intl.NumberFormat('uk-UA',{maximumFractionDigits:0});
-let S={meta:clone(DEF),months:{}};
+let S={meta:clone(DEF),months:{},days:{}};
 const money=n=>NF.format(r2(n))+' '+S.meta.cur, money0=n=>NF0.format(Math.round(n))+' '+S.meta.cur;
 const kfmt=v=>Math.abs(v)>=1000?NF.format(Math.round(v/100)/10)+'k':NF0.format(v);
 const txs=m=>S.months[m]||[];
@@ -360,11 +406,11 @@ const IS_WEB=/github\.io$/.test(location.hostname)||/[?&]web\b/.test(location.se
 let SB=null,UID=null,CHAN=null,COL=null,LOCAL=false;const Q={};
 const cacheLocal=()=>{try{localStorage.setItem(IS_WEB?'fin-cache':'fin-v1',JSON.stringify(IS_WEB?{uid:UID,S}:S))}catch(e){}};
 function save(...keys){cacheLocal();
-  for(const k of new Set(keys)){const body=k==='meta'?clone(S.meta):{items:clone(txs(k.slice(2)))};
+  for(const k of new Set(keys)){const body=k==='meta'?clone(S.meta):k.startsWith('d-')?{days:clone(S.days[k.slice(2)]||{})}:{items:clone(txs(k.slice(2)))};
     if(IS_WEB&&SB&&UID)Q[k]=(Q[k]||Promise.resolve()).then(async()=>{const{error}=await SB.from('finance_docs').upsert({user_id:UID,key:k,body,updated_at:new Date().toISOString()});if(error)throw error;status(syncLabel())}).catch(()=>{status('Не синхронізовано — перевір інтернет');toast('Не вдалося зберегти в хмару')});
     else if(COL)Q[k]=(Q[k]||Promise.resolve()).then(()=>COL.doc(k).set(body)).catch(e=>toast('Не вдалося зберегти ('+(e&&e.code||'помилка')+')'))}}
 const syncLabel=()=>IS_WEB?'Синхронізовано':COL?'Збережено в хмарі':'Збережено в цьому браузері';
-const applyDocs=list=>{const months={};let meta=null;list.forEach(([k,b])=>{if(k==='meta')meta=b;else if(k.startsWith('m-'))months[k.slice(2)]=Array.isArray(b&&b.items)?clone(b.items):[]});S.months=months;S.meta=Object.assign(clone(DEF),meta?clone(meta):{})};
+const applyDocs=list=>{const months={},days={};let meta=null;list.forEach(([k,b])=>{if(k==='meta')meta=b;else if(k.startsWith('m-'))months[k.slice(2)]=Array.isArray(b&&b.items)?clone(b.items):[];else if(k.startsWith('d-'))days[k.slice(2)]=b&&b.days&&typeof b.days==='object'?clone(b.days):{}});S.months=months;S.days=days;S.meta=Object.assign(clone(DEF),meta?clone(meta):{})};
 
 /* ================= toast / tip ================= */
 let tT,undoFn=null;
@@ -491,7 +537,7 @@ function renderSettings(){
   const chip=(t,c)=>`<span>${esc(c)}<button data-cdel="${t}" data-c="${esc(c)}" aria-label="Прибрати ${esc(c)}">✕</button></span>`;
   $('#catsExp').innerHTML=S.meta.cats.exp.map(c=>chip('exp',c)).join('');$('#catsInc').innerHTML=S.meta.cats.inc.map(c=>chip('inc',c)).join('');
   if(!$('#budgets').contains(document.activeElement))$('#budgets').innerHTML=S.meta.cats.exp.map(c=>`<div style="display:flex;align-items:center;gap:10px">${icBox(c)}<input inputmode="decimal" data-bud="${esc(c)}" value="${S.meta.budgets[c]||''}" placeholder="${esc(c)} — без ліміту" aria-label="Ліміт: ${esc(c)}"></div>`).join('')}
-function render(){renderHome();renderLoans();renderStats();if($('#shHist').classList.contains('open'))renderHist();if($('#shSet').classList.contains('open'))renderSettings();if($('#shTx').classList.contains('open'))renderCats()}
+function render(){renderHome();renderTodayCard();renderLoans();renderStats();renderDay();if($('#shDay').classList.contains('open'))renderDaySheet();if($('#shHist').classList.contains('open'))renderHist();if($('#shSet').classList.contains('open'))renderSettings();if($('#shTx').classList.contains('open'))renderCats()}
 
 /* ================= sheets ================= */
 let sheetSrc=null;
@@ -594,15 +640,90 @@ $('#addExp').onclick=()=>addCat('exp','#newExp');$('#addInc').onclick=()=>addCat
 $('#bkCopy').onclick=async()=>{const t=JSON.stringify(S);$('#backup').value=t;try{await navigator.clipboard.writeText(t);toast('Скопійовано')}catch(e){$('#backup').select();toast('Виділив текст — скопіюй вручну')}};
 $('#bkLoad').onclick=()=>{let v;try{v=JSON.parse($('#backup').value)}catch(e){toast('Це не схоже на резервну копію');return}
   if(!v||!v.meta||!v.months){toast('Це не схоже на резервну копію');return}
-  const old=Object.keys(S.months);S={meta:Object.assign(clone(DEF),v.meta),months:v.months};save('meta',...new Set([...old,...Object.keys(S.months)].map(m=>'m-'+m)));render();toast('Дані відновлено')};
+  const old=Object.keys(S.months),oldD=Object.keys(S.days||{});S={meta:Object.assign(clone(DEF),v.meta),months:v.months,days:v.days||{}};save('meta',...new Set([...old,...Object.keys(S.months)].map(m=>'m-'+m)),...new Set([...oldD,...Object.keys(S.days)].map(m=>'d-'+m)));render();toast('Дані відновлено')};
 /* accent */
 const ACCS=['#007aff','#ff9500','#34c759','#ff2d55','#8e8e93','ink'];
 const setAcc=c=>{document.documentElement.style.setProperty('--acc',c==='ink'?'light-dark(#000,#fff)':c);$('#accs').innerHTML=ACCS.map(x=>`<button data-acc="${x}" class="${x===c?'on':''}" style="background:${x==='ink'?'light-dark(#000,#fff)':x}" aria-label="Колір ${x==='ink'?'чорний':x}"></button>`).join('')};
 try{setAcc(localStorage.getItem('fin-acc2')||ACCS[0])}catch(e){setAcc(ACCS[0])}
 $('#accs').addEventListener('click',e=>{const b=e.target.closest('[data-acc]');if(!b)return;e.stopPropagation();setAcc(b.dataset.acc);pop($('#accs .on'),.6);try{localStorage.setItem('fin-acc2',b.dataset.acc)}catch(_){}});
 
+
+/* ================= day log ================= */
+const MOODS=['Погано','Так собі','Нормально','Добре','Чудово'],MOUTH=['M8 16.5q4-3.5 8 0','M8.5 16q3.5-1.6 7 0','M8.5 15.5h7','M8.5 14.5q3.5 2 7 0','M8 14q4 4 8 0'];
+const TAGS=['Сон','Багато роботи','Гроші','Стосунки','Здоровʼя','Спорт','Відпочинок','Дедлайни','Клієнти','Погода'];
+const face=i=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><circle cx="9" cy="10" r=".9" fill="currentColor"/><circle cx="15" cy="10" r=".9" fill="currentColor"/><path d="${MOUTH[i]}"/></svg>`;
+const MSH=[18,34,52,72,92],moodBg=m=>m?`color-mix(in srgb,var(--acc) ${MSH[m-1]}%,var(--soft))`:'var(--soft)';
+const dayGet=d=>(S.days[d.slice(0,7)]||{})[d];
+function daySet(d,patch){const m=d.slice(0,7),mo=S.days[m]=S.days[m]||{},cur=Object.assign({tz:0,mood:0,tags:[],note:''},mo[d]||{},patch);
+  if(!cur.tz&&!cur.mood&&!(cur.tags||[]).length&&!cur.note)delete mo[d];else mo[d]=cur;queueDaySave(m)}
+const dayTimers={};function queueDaySave(m){cacheLocal();clearTimeout(dayTimers[m]);dayTimers[m]=setTimeout(()=>save('d-'+m),700)}
+const moodBtns=(sel,prefix)=>MOODS.map((n,i)=>`<button class="mood ${sel===i+1?'on':''}" data-${prefix}="${i+1}" role="radio" aria-checked="${sel===i+1}">${face(i)}<span>${n}</span></button>`).join('');
+function renderTodayCard(){const d=today(),e=dayGet(d)||{};$('#tzToday').textContent=e.tz||0;$('#moodToday').innerHTML=moodBtns(e.mood,'mt');
+  $('#tzHint').textContent=e.mood||e.tz?'записано ✓':'скільки зробив'}
+let DAY=today(),dayM=today().slice(0,7);
+const dayTitle=d=>{const t=today();return d===t?'Сьогодні':d===shiftDay(t,-1)?'Вчора':fmtD(d)};
+function renderDaySheet(){const e=dayGet(DAY)||{};$('#dayTitle').textContent=dayTitle(DAY);$('#dayTz').textContent=e.tz||0;$('#dayMood').innerHTML=moodBtns(e.mood,'dm');
+  $('#dayTags').innerHTML=TAGS.map(t=>`<button class="chip ${(e.tags||[]).includes(t)?'on':''}" data-dtag="${esc(t)}" aria-pressed="${(e.tags||[]).includes(t)}">${esc(t)}</button>`).join('');
+  if(document.activeElement!==$('#dayNote'))$('#dayNote').value=e.note||'';$('#dayNext').disabled=DAY>=today();$('#dayNext').style.opacity=DAY>=today()?.3:1}
+function openDay(d,src){DAY=d||today();renderDaySheet();openSheet('#shDay',src)}
+const allDays=()=>Object.values(S.days).flatMap(o=>Object.entries(o)).map(([d,e])=>({d,...e})).sort((a,b)=>a.d.localeCompare(b.d));
+const avg=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:0, f1=n=>NF.format(Math.round(n*10)/10);
+const WDN=['неділя','понеділок','вівторок','середа','четвер','пʼятниця','субота'],WDA=['неділю','понеділок','вівторок','середу','четвер','пʼятницю','суботу'];
+function insights(){const all=allDays().filter(e=>e.mood||e.tz),moodDays=all.filter(e=>e.mood),out=[];
+  if(moodDays.length<5)return[['dots','Поки замало даних',`Відмічай ТЗ і настрій щодня. Аналіз зʼявиться після 5 днів з настроєм (зараз ${moodDays.length}).`]];
+  const avgMood=avg(moodDays.map(e=>e.mood)),work=moodDays.filter(e=>e.tz>0);
+  if(work.length>=4){const sorted=work.map(e=>e.tz).sort((a,b)=>a-b),med=sorted[Math.floor(sorted.length/2)],hi=work.filter(e=>e.tz>med),lo=work.filter(e=>e.tz<=med);
+    if(hi.length>=2&&lo.length>=2){const a=avg(hi.map(e=>e.mood)),b=avg(lo.map(e=>e.mood)),diff=a-b;
+      out.push(['brief',Math.abs(diff)<0.3?'Навантаження майже не впливає на настрій':diff<0?'У завантажені дні настрій нижчий':'У завантажені дні настрій навіть кращий',`Коли більше ${med} ТЗ — середній настрій ${f1(a)} з 5, у легші дні — ${f1(b)}.`])}}
+  const off=moodDays.filter(e=>!e.tz);if(off.length>=2&&work.length>=2)out.push(['star','Дні без ТЗ',`Без ТЗ настрій у середньому ${f1(avg(off.map(e=>e.mood)))}, у робочі дні — ${f1(avg(work.map(e=>e.mood)))}.`]);
+  const byW=[...Array(7)].map(()=>[]);moodDays.forEach(e=>byW[new Date(e.d+'T12:00:00').getDay()].push(e.mood));const wd=byW.map((a,i)=>({i,n:a.length,v:avg(a)})).filter(x=>x.n>=2);
+  if(wd.length>=3){wd.sort((a,b)=>b.v-a.v);out.push(['home','Найкращий і найважчий день тижня',`Найкраще почуваєшся в ${WDA[wd[0].i]} (${f1(wd[0].v)}), найгірше — в ${WDA[wd[wd.length-1].i]} (${f1(wd[wd.length-1].v)}).`])}
+  const tz=all.filter(e=>e.tz>0),byWt=[...Array(7)].map(()=>[]);tz.forEach(e=>byWt[new Date(e.d+'T12:00:00').getDay()].push(e.tz));const wt=byWt.map((a,i)=>({i,n:a.length,v:avg(a)})).filter(x=>x.n>=2).sort((a,b)=>b.v-a.v);
+  if(wt.length>=3)out.push(['orders','Найбільше ТЗ',`У середньому ${f1(wt[0].v)} ТЗ у ${WDA[wt[0].i]}. Загалом за всі записи — ${NF0.format(tz.reduce((a,e)=>a+e.tz,0))} ТЗ.`]);
+  const tagFx=TAGS.map(t=>{const w=moodDays.filter(e=>(e.tags||[]).includes(t));return{t,n:w.length,d:avg(w.map(e=>e.mood))-avgMood}}).filter(x=>x.n>=2&&Math.abs(x.d)>=0.4).sort((a,b)=>a.d-b.d);
+  if(tagFx.length){const neg=tagFx.filter(x=>x.d<0),pos=tagFx.filter(x=>x.d>0);
+    if(neg.length)out.push(['heart','Що тягне вниз',neg.slice(0,3).map(x=>`«${x.t}» −${f1(-x.d)}`).join(', ')+' до середнього настрою в такі дні.']);
+    if(pos.length)out.push(['gift','Що піднімає настрій',pos.slice(-3).reverse().map(x=>`«${x.t}» +${f1(x.d)}`).join(', ')+'.'])}
+  let st=0,d=today();if(!dayGet(d))d=shiftDay(d,-1);while(dayGet(d)){st++;d=shiftDay(d,-1)}
+  out.push(['repeat',st?`Серія: ${st} ${st===1?'день':st<5?'дні':'днів'} поспіль`:'Серію перервано',st?'Стільки днів підряд ти записуєш свій день. Так аналіз точніший.':'Запиши сьогоднішній день, щоб почати нову серію.']);
+  return out}
+function renderDay(){const m=dayM,mo=S.days[m]||{},ents=Object.values(mo),prev=S.days[addM(m,-1)]||{};$('#dMonth').textContent=mLabel(m);
+  const tz=ents.reduce((a,e)=>a+(e.tz||0),0),wdays=ents.filter(e=>e.tz>0).length,md=ents.filter(e=>e.mood),am=avg(md.map(e=>e.mood)),pm=avg(Object.values(prev).filter(e=>e.mood).map(e=>e.mood));
+  countTo($('#kTz'),tz,v=>NF0.format(v));$('#kTzD').textContent=wdays?`≈ ${f1(tz/wdays)} за робочий день`:'—';
+  $('#kMood').textContent=md.length?f1(am)+' з 5':'—';$('#kMoodD').innerHTML=md.length?(pm?(am>=pm+0.05?'<span>▲ краще, ніж минулого</span>':am<=pm-0.05?'<span class="bad">▼ гірше, ніж минулого</span>':'як минулого'):MOODS[Math.round(am)-1]):'відмічай щодня';
+  const inc=sum(m,'inc');$('#kPer').textContent=tz&&inc?money0(inc/tz):'—';$('#kPerD').textContent=tz&&inc?`дохід ${money0(inc)} ÷ ${tz} ТЗ`:'потрібні ТЗ і доходи місяця';
+  const first=new Date(m+'-01T12:00:00').getDay(),lead=(first+6)%7,n=dim(m),t=today();
+  let c=['Пн','Вт','Ср','Чт','Пт','Сб','Нд'].map(x=>`<span class="wd">${x}</span>`).join('')+'<span></span>'.repeat(lead);
+  for(let i=1;i<=n;i++){const d=m+'-'+pad2(i),e=mo[d]||{},fut=d>t,lvl=e.mood||0,dark=lvl>=4;
+    c+=`<button data-dday="${d}" class="${d===t?'today':''} ${fut?'future':''}" ${fut?'disabled':''} style="background:${moodBg(lvl)};color:${dark?'#fff':'var(--ink)'}" aria-label="${fmtD(d)}${e.tz?', ТЗ: '+e.tz:''}${lvl?', настрій: '+MOODS[lvl-1]:''}">${i}${e.tz?`<small>${e.tz} ТЗ</small>`:''}</button>`}
+  $('#cal').innerHTML=c;$$('.scale i').forEach(i=>i.style.background=moodBg(+i.dataset.m));
+  $('#insights').innerHTML=insights().map(([ic,h,p])=>`<div class="insight"><span class="ic">${svg(ic)}</span><span><b>${esc(h)}</b><span class="sub" style="font-size:14px">${esc(p)}</span></span></div>`).join('');
+  if(view==='day')tzChart()}
+function tzChart(){const fig=$('#fTz'),s=fig.querySelector('svg'),W=s.clientWidth,H=s.clientHeight;if(!W||!H)return;const m=dayM,mo=S.days[m]||{},n=dim(m);
+  const v=[...Array(n)].map((_,i)=>mo[m+'-'+pad2(i+1)]||{}),L=30,R=4,T=10,B=22,max=Math.max(4,...v.map(e=>e.tz||0)),gw=(W-L-R)/n,bw=Math.max(3,Math.min(16,gw*.68)),Y=x=>(H-T-B)*x/max;
+  const step=max<=5?1:Math.ceil(max/4);let o='';for(let k=0;k<=max;k+=step){const y=H-B-(H-T-B)*k/max;o+=`<line x1="${L}" x2="${W-R}" y1="${y}" y2="${y}" stroke="${k?'var(--grid)':'var(--rule)'}"/><text x="${L-6}" y="${y+4}" text-anchor="end" font-size="11" fill="currentColor" opacity=".6">${k}</text>`}
+  v.forEach((e,i)=>{const x=L+gw*i+(gw-bw)/2,h=Y(e.tz||0);if(h>0)o+=`<path class="b" data-d="${i*18}" d="${topRound(x,H-B-h,bw,h,4)}" fill="${e.mood?moodBg(e.mood):'var(--inc)'}" style="transform-box:fill-box;transform-origin:50% 100%"/>`;
+    if(i%(W<420?5:3)===0||i===n-1)o+=`<text x="${L+gw*i+gw/2}" y="${H-5}" text-anchor="middle" font-size="11" fill="currentColor" opacity=".6">${i+1}</text>`;
+    o+=`<rect data-i="${i}" x="${L+gw*i}" y="0" width="${gw}" height="${H}" fill="transparent"/>`});
+  const an=sigChanged('fTz',[m,v]);s.innerHTML=o;
+  if(an)s.querySelectorAll('path.b').forEach(p=>p.animate([{transform:'scaleY(0)'},{transform:'scaleY(1)'}],{duration:650,delay:+p.dataset.d,easing:SPRING,fill:'backwards'}));
+  s.querySelectorAll('rect[data-i]').forEach(r=>{const i=+r.dataset.i,e=v[i];r.onpointermove=ev=>showTip(ev,fmtD(m+'-'+pad2(i+1)),[['ТЗ',String(e.tz||0),'var(--ink)'],['Настрій',e.mood?MOODS[e.mood-1]:'—',e.mood?moodBg(e.mood):'transparent']]);r.onpointerleave=hideTip;r.onclick=()=>{const d=m+'-'+pad2(i+1);if(d<=today())openDay(d)}})}
+document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+  if(b.dataset.tz){const d=today(),cur=(dayGet(d)||{}).tz||0,nv=Math.max(0,cur+(+b.dataset.tz));daySet(d,{tz:nv});$('#tzToday').textContent=nv;pop($('#tzToday'),.8);$('#tzHint').textContent='записано ✓';if(view==='day')renderDay()}
+  else if(b.dataset.mt){const d=today(),v=+b.dataset.mt,cur=(dayGet(d)||{}).mood;daySet(d,{mood:cur===v?0:v});renderTodayCard();pop($(`#moodToday [data-mt="${v}"]`),.85);if(cur!==v)toast('Настрій записано');if(view==='day')renderDay()}
+  else if(b.dataset.dtz){const cur=(dayGet(DAY)||{}).tz||0,nv=Math.max(0,cur+(+b.dataset.dtz));daySet(DAY,{tz:nv});$('#dayTz').textContent=nv;pop($('#dayTz'),.8)}
+  else if(b.dataset.dm){const v=+b.dataset.dm,cur=(dayGet(DAY)||{}).mood;daySet(DAY,{mood:cur===v?0:v});renderDaySheet();pop($(`#dayMood [data-dm="${v}"]`),.85)}
+  else if(b.dataset.dtag){const t=b.dataset.dtag,tags=((dayGet(DAY)||{}).tags||[]).slice(),i=tags.indexOf(t);i>=0?tags.splice(i,1):tags.push(t);daySet(DAY,{tags});renderDaySheet()}
+  else if(b.dataset.dday){openDay(b.dataset.dday,b)}});
+$('#dayNote').addEventListener('input',e=>daySet(DAY,{note:e.target.value.slice(0,1000)}));
+$('#dayPrev').onclick=()=>{DAY=shiftDay(DAY,-1);renderDaySheet()};$('#dayNext').onclick=()=>{if(DAY<today()){DAY=shiftDay(DAY,1);renderDaySheet()}};
+$('#daySave').onclick=()=>{const m=DAY.slice(0,7);clearTimeout(dayTimers[m]);save('d-'+m);closeSheet('#shDay');render();if(dayGet(DAY))toast('День записано')};
+$('#dayClear').onclick=()=>{const m=DAY.slice(0,7),mo=S.days[m];if(mo&&mo[DAY]){const old=mo[DAY];delete mo[DAY];save('d-'+m);renderDaySheet();render();toast('Запис очищено',()=>{(S.days[m]=S.days[m]||{})[DAY]=old;save('d-'+m);renderDaySheet();render()})}};
+$('#openDayToday').onclick=e=>openDay(today(),e.currentTarget);
+$('#dPrev').onclick=()=>{dayM=addM(dayM,-1);renderDay()};$('#dNext').onclick=()=>{dayM=addM(dayM,1);renderDay()};
+
 /* ================= tabs + liquid pill ================= */
-const ORDER=['home','loans','stats'],TITLES={home:'Мої гроші',loans:'Кредити',stats:'Аналітика'},NAV=$('nav'),PILL=$('.pill');
+const ORDER=['home','loans','day','stats'],TITLES={home:'Мої гроші',loans:'Кредити',day:'Мій день',stats:'Аналітика'},NAV=$('nav'),PILL=$('.pill');
 let prevIdx=0,booted=false,PP={x:0,w:0},pillAnim=null,drag=null;
 const setPill=(x,w,sc='')=>{PP={x,w};PILL.style.width=w+'px';PILL.style.transform=`translateX(${x}px)${sc}`};
 function movePill(animate){const a=NAV.querySelector('a.on');if(!a)return;const x=a.offsetLeft,w=a.offsetWidth;if(pillAnim){pillAnim.cancel();pillAnim=null}
@@ -629,7 +750,7 @@ const endDrag=e=>{if(!drag)return;const d=drag;drag=null;$$('nav a.hov').forEach
   if(best&&best.dataset.v!==view)location.hash=best.dataset.v;else movePill(true)};
 NAV.addEventListener('pointerup',endDrag);NAV.addEventListener('pointercancel',endDrag);NAV.addEventListener('dragstart',e=>e.preventDefault());$$('nav a').forEach(a=>a.draggable=false);
 NAV.addEventListener('click',e=>{if(e.detail!==0)e.preventDefault()});
-new ResizeObserver(()=>{if(!pillAnim&&!drag)movePill(false);if(view==='stats')renderStats();if(view==='loans')renderLoans()}).observe(document.body);
+new ResizeObserver(()=>{if(!pillAnim&&!drag)movePill(false);if(view==='stats')renderStats();if(view==='loans')renderLoans();if(view==='day')tzChart()}).observe(document.body);
 document.fonts&&document.fonts.ready.then(()=>movePill(false));
 
 /* ================= boot ================= */
@@ -637,26 +758,26 @@ route();
 if(IS_WEB){
   const pull=async()=>{const{data,error}=await SB.from('finance_docs').select('key,body').eq('user_id',UID);if(error){status('Немає звʼязку — показую збережене');return}applyDocs(data.map(r=>[r.key,r.body]));cacheLocal();render();status('Синхронізовано')};
   const start=async session=>{UID=session.user.id;$('#auth').hidden=true;$('#whoami').textContent=session.user.email;$('#accGroup').hidden=false;
-    try{const c=JSON.parse(localStorage.getItem('fin-cache')||'null');if(c&&c.uid===UID&&c.S){S.meta=Object.assign(clone(DEF),c.S.meta);S.months=c.S.months||{};render()}}catch(e){}
+    try{const c=JSON.parse(localStorage.getItem('fin-cache')||'null');if(c&&c.uid===UID&&c.S){S.meta=Object.assign(clone(DEF),c.S.meta);S.months=c.S.months||{};S.days=c.S.days||{};render()}}catch(e){}
     status('Синхронізація…');await pull();
     if(CHAN)SB.removeChannel(CHAN);CHAN=SB.channel('fin-'+UID).on('postgres_changes',{event:'*',schema:'public',table:'finance_docs',filter:'user_id=eq.'+UID},p=>{const r=p.new;if(!r||!r.key)return;
-      if(r.key==='meta')S.meta=Object.assign(clone(DEF),r.body||{});else if(r.key.startsWith('m-'))S.months[r.key.slice(2)]=(r.body&&r.body.items)||[];cacheLocal();render()}).subscribe()};
+      if(r.key==='meta')S.meta=Object.assign(clone(DEF),r.body||{});else if(r.key.startsWith('m-'))S.months[r.key.slice(2)]=(r.body&&r.body.items)||[];else if(r.key.startsWith('d-'))S.days[r.key.slice(2)]=(r.body&&r.body.days)||{};cacheLocal();render()}).subscribe()};
   const showAuth=()=>{UID=null;$('#auth').hidden=false;status('');setTimeout(()=>$('#aEmail').focus(),50)};
   $('#authForm').onsubmit=async e=>{e.preventDefault();const email=$('#aEmail').value.trim(),password=$('#aPass').value;$('#aErr').textContent='';
     if(!email||!password){$('#aErr').textContent='Введи email і пароль';return}$('#aBtn').disabled=true;$('#aBtn').textContent='Входжу…';
     const{data,error}=await SB.auth.signInWithPassword({email,password});$('#aBtn').disabled=false;$('#aBtn').textContent='Увійти';
     if(error){$('#aErr').textContent=/invalid/i.test(error.message)?'Невірний email або пароль':'Не вдалося увійти. Спробуй ще раз.';return}$('#aPass').value='';start(data.session)};
-  $('#logout').onclick=async()=>{await SB.auth.signOut();if(CHAN)SB.removeChannel(CHAN);CHAN=null;S={meta:clone(DEF),months:{}};try{localStorage.removeItem('fin-cache')}catch(e){}closeSheet('#shSet');render();showAuth()};
+  $('#logout').onclick=async()=>{await SB.auth.signOut();if(CHAN)SB.removeChannel(CHAN);CHAN=null;S={meta:clone(DEF),months:{},days:{}};try{localStorage.removeItem('fin-cache')}catch(e){}closeSheet('#shSet');render();showAuth()};
   document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&UID)pull()});
   if(window.supabase){SB=supabase.createClient('https://sxyvmzxztmiyaspkhsoz.supabase.co','sb_publishable_bDHFlu3QpXKH7XsX1XDxpA_N4AUW7o3',{auth:{persistSession:true}});SB.auth.getSession().then(({data})=>data.session?start(data.session):showAuth())}
-  else{status('Немає звʼязку з сервером');try{const c=JSON.parse(localStorage.getItem('fin-cache')||'null');if(c&&c.S){S.meta=Object.assign(clone(DEF),c.S.meta);S.months=c.S.months||{};render()}}catch(e){}}
+  else{status('Немає звʼязку з сервером');try{const c=JSON.parse(localStorage.getItem('fin-cache')||'null');if(c&&c.S){S.meta=Object.assign(clone(DEF),c.S.meta);S.months=c.S.months||{};S.days=c.S.days||{};render()}}catch(e){}}
   if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 }else(async()=>{let db=null,user=null,id=null;
   try{if(window.claude&&claude.use)[db,user]=await Promise.all([claude.use('db'),claude.use('user')])}catch(e){}
   try{id=user?await user.id():null}catch(e){}
   if(db&&id){COL=db.collection('data/users/'+id);const t=setTimeout(()=>status('Дані поки недоступні — перевір зʼєднання'),10000);status('Завантаження…');
     COL.onSnapshot(snap=>{if(!snap.metadata.fromCache){clearTimeout(t);status('Збережено в хмарі')}applyDocs(snap.docs.map(d=>[d.id,d.data()]));render()},e=>{clearTimeout(t);status('Синхронізація зупинилась — онови сторінку')})}
-  else{LOCAL=true;try{const v=JSON.parse(localStorage.getItem('fin-v1')||'null');if(v){S.meta=Object.assign(clone(DEF),v.meta);S.months=v.months||{}}}catch(e){}status('Збережено в цьому браузері');render()}
+  else{LOCAL=true;try{const v=JSON.parse(localStorage.getItem('fin-v1')||'null');if(v){S.meta=Object.assign(clone(DEF),v.meta);S.months=v.months||{};S.days=v.days||{}}}catch(e){}status('Збережено в цьому браузері');render()}
 })();
 }
 </script>
